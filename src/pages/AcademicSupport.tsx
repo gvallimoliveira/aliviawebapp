@@ -49,9 +49,9 @@ const tools = [
     icon: BookOpen,
     title: { pt: "Biblioteca de Evidências por Nicho", en: "Evidence Library by Niche", es: "Biblioteca de Evidencia por Nicho" },
     desc: {
-      pt: "Dentro do Agente Clínico, acesse os artigos aprovados (PEDro ≥ 7) que alimentam a IA — separados por nicho, com filtros de ano/nota e favoritos em 1 clique. Pensado para apoiar estudos, TCC, fichamentos e cases clínicos.",
-      en: "Inside the Clinical Agent, browse the curated studies (PEDro ≥ 7) that power the AI — sorted by niche, with year/score filters and one-click favorites. Designed to support coursework, thesis writing and clinical cases.",
-      es: "Dentro del Agente Clínico, accede a los artículos aprobados (PEDro ≥ 7) que alimentan la IA — por nicho, con filtros de año/nota y favoritos en un clic. Ideal para estudios, TCC y casos clínicos.",
+      pt: "Consulte artigos selecionados por nicho no Agente Clínico, com filtros de ano, nota PEDro quando disponível e favoritos. A nota não se aplica a todos os tipos de estudo. Apoia estudos, fichamentos e discussão de casos; confira as fontes antes de citar.",
+      en: "Browse papers selected by niche in the Clinical Agent, with year filters, PEDro scores when available and favorites. The score does not apply to every study type. Supports study, reading notes and case discussions; check sources before citing.",
+      es: "Consulta artículos seleccionados por especialidad en el Agente Clínico, con filtros de año, puntuación PEDro cuando esté disponible y favoritos. No se aplica a todos los tipos de estudio. Apoya el estudio y la discusión de casos; revisa las fuentes antes de citar.",
     },
   },
   {
@@ -327,11 +327,7 @@ const AcademicSupport = () => {
                   <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary tracking-wide">BETA</span>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  {lang === "pt"
-                    ? "Acesse, dentro do Agente Clínico, a curadoria de artigos PEDro ≥ 7 que alimenta a IA — separada por nicho, com filtros de ano/nota e favoritos. Apoia TCC, fichamento e cases."
-                    : lang === "es"
-                    ? "Dentro del Agente Clínico, accede a la curaduría PEDro ≥ 7 que alimenta la IA — por nicho, con filtros de año/nota y favoritos."
-                    : "Inside the Clinical Agent, browse the curated PEDro ≥ 7 studies powering the AI — sorted by niche, with year/score filters and favorites."}
+                  {t("support.evidence.library.desc")}
                 </p>
               </div>
             </div>

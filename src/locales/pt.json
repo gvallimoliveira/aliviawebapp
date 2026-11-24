@@ -1,4 +1,8 @@
 {
+  "clinic.support.tool.evidence_library.title": "Biblioteca de Evidências por Nicho",
+  "clinic.support.tool.evidence_library.desc": "Consulte artigos selecionados por nicho dentro do Agente Clínico, com referências bibliográficas, filtros de ano, nota PEDro quando disponível e favoritos. A PEDro avalia aspectos metodológicos de ensaios clínicos; não se aplica a todos os tipos de estudo. N/A não é nota zero. Identificador confirmado não certifica a qualidade nem substitui leitura crítica. Disponível para Acadêmico assinante/parceiro acadêmico, PRO e Clínica.",
+  "evidence.pedro_note": "A nota PEDro é exibida quando disponível e avalia aspectos metodológicos de ensaios clínicos. Não se aplica a todos os tipos de estudo; N/A não significa nota zero. A leitura crítica continua necessária.",
+  "support.evidence.library.desc": "Consulte artigos selecionados por nicho no Agente Clínico, com referências bibliográficas, filtros de ano, nota PEDro quando disponível e favoritos. A nota avalia aspectos metodológicos de ensaios clínicos, não todos os tipos de estudo; N/A não é nota zero. Identificador confirmado não certifica a qualidade nem a aplicação ao caso: leia a fonte e avalie criticamente antes de citar ou decidir.",
   "clinic.how_it_works.hypothesis": "A IA sugere uma hipótese clínica preliminar ao concluir a avaliação, para revisão do fisioterapeuta",
   "support.pro.tool.demo_registration.title": "Cadastro na demonstração",
   "support.pro.tool.demo_registration.desc": "Adicionar ou editar um cadastro na demonstração altera apenas a lista simulada nesta página. Recarregar remove essas alterações. Não cria pacientes reais, avaliações ou consumo de IA; os dados do PRO e da clínica permanecem separados.",

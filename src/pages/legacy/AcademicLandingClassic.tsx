@@ -43,13 +43,13 @@ const COPY = {
     quote: "Estudar fisioterapia é fácil. Pensar como fisioterapeuta é o desafio. O Aliv.iA Acadêmico te treina nisso todos os dias.",
     whyTitle: "Por que estudantes escolhem o Aliv.iA Acadêmico",
     benefits: [
-      { icon: Brain, title: "Agente Clínico com IA", desc: "Converse 24/7 com um agente treinado em evidência (PEDro ≥ 7) para tirar dúvidas de caso, diagnóstico diferencial e conduta — sem julgamento, na hora que a dúvida bate." },
+      { icon: Brain, title: "Agente Clínico com IA", desc: "Discuta casos, hipóteses clínicas preliminares e possibilidades de conduta com IA especializada em fisioterapia, apoiada por evidências científicas e diretrizes clínicas." },
       { icon: Lightbulb, title: "Modo Mentor", desc: "Ative o modo mentor e receba explicações passo a passo do raciocínio clínico: por que essa hipótese, o que descartar, qual teste pedir e por quê." },
       { icon: UserPlus, title: "Cadastre seus pacientes de estágio", desc: "Adicione os pacientes que você acompanha no estágio e tenha impressão clínica com sugestão de diagnóstico, além de poder conversar no Chat Clínico vinculando o caso real — entenda o quadro a fundo, receba sugestões de tratamento baseadas em evidência e tire qualquer dúvida na hora." },
       { icon: MessageCircleQuestion, title: "Quizzes adaptativos", desc: "Quizzes inteligentes que se adaptam ao seu nível e nicho de estudo. Reforço espaçado para fixar de verdade — não decorar para a prova." },
       { icon: Compass, title: "Trilhas de Conhecimento", desc: "8 trilhas curadas: 3 de base (anatomia, biomecânica e cinesiologia) e 5 clínicas por região (ombro, lombar, cervical, quadril, joelho), com evidências e protocolos do básico ao avançado." },
       { icon: FlaskConical, title: "Casos Clínicos Simulados", desc: "Pacientes virtuais com história completa para você avaliar do zero: anamnese, mapa de dor, testes funcionais, hipótese e plano. Erre sem consequências, aprenda com gabarito." },
-      { icon: BookOpen, title: "Evidência de alta qualidade", desc: "Base de conhecimento filtrada por PEDro ≥ 7 e diretrizes internacionais. Estude a partir do que realmente sustenta a prática baseada em evidência." },
+      { icon: BookOpen, title: "Evidências para estudar e discutir", desc: "Artigos científicos e diretrizes clínicas organizados para apoiar seus estudos e a discussão de casos. Consulte as fontes e avalie como se aplicam ao contexto." },
       { icon: Workflow, title: "Fluxo padrão-ouro de avaliação", desc: "Pratique o fluxo completo: anamnese estruturada → red flags → mapa de dor → valores de ADM (goniometria) → dinamometria com valores de força → questionários validados → hipótese → tratamento. O hábito da boa avaliação se constrói repetindo." },
       { icon: Activity, title: "Da teoria à prática, mais rápido", desc: "Cada caso usa as mesmas ferramentas que profissionais usam com pacientes reais. Você chega ao estágio sabendo o que fazer — não tentando lembrar." },
     ],
@@ -86,7 +86,7 @@ const COPY = {
       "Casos clínicos simulados ilimitados",
       "Avaliação padrão-ouro: anamnese, mapa de dor, testes, questionários, hipótese e tratamento",
       "Selo \"Aliv.iA Acadêmico\" automático em PDFs e links públicos",
-      "Acesso a evidências curadas (PEDro ≥ 7)",
+      "Acesso à biblioteca de evidências por nicho",
       "Migração automática para perfil Profissional ao adicionar CREFITO",
     ],
     cta: "Assinar Aliv.iA Acadêmico",
@@ -97,7 +97,7 @@ const COPY = {
       { q: "Vou ter que pagar de novo quando me formar?", a: "Não. Sua assinatura continua ativa após o CREFITO. Você só atualiza o registro em \"Minha conta\" e o selo acadêmico sai automaticamente. Sem novo cadastro, sem novo pagamento, sem perder histórico." },
       { q: "Posso atender paciente real com o Aliv.iA Acadêmico?", a: "Pode treinar avaliação, mas toda conduta clínica em paciente real exige supervisão de um fisioterapeuta com CREFITO ativo. Os PDFs e links públicos saem identificados como acadêmicos justamente para proteger isso." },
       { q: "O modo mentor é só texto ou guia o caso de verdade?", a: "Ele guia. O Mentor te interrompe no momento certo, sugere o próximo teste, pergunta por que você descartou uma hipótese e mostra o porquê. É como ter um professor de raciocínio clínico ao seu lado em cada caso." },
-      { q: "As trilhas de conhecimento são quais?", a: "Hoje são 8 trilhas: 3 de base (Anatomia, Biomecânica e Cinesiologia) cobrindo as principais regiões corporais, e 5 clínicas por nicho (ombro, coluna lombar, cervical, quadril e joelho) — todas filtradas por PEDro ≥ 7. Novas trilhas entram conforme o agente é treinado." },
+      { q: "As trilhas de conhecimento são quais?", a: "Hoje são 8 trilhas: 3 de base (Anatomia, Biomecânica e Cinesiologia) cobrindo as principais regiões corporais, e 5 clínicas por nicho (ombro, coluna lombar, cervical, quadril e joelho) — com conteúdos de base e evidências clínicas organizados para estudo. Novas trilhas entram conforme o agente é treinado." },
       { q: "E se eu não conseguir manter o estudo? Posso cancelar?", a: "Ao cancelar uma assinatura anual, os meses utilizados são recalculados pelo preço mensal do mesmo plano, e o saldo positivo do total anual efetivamente pago é reembolsado. Exemplo: contratou 12 meses e usou 3 → reembolso = total anual pago menos 3 mensalidades, e não 9/12 do total. Se não houver saldo positivo, não há valor a devolver. Solicite o reembolso pelo suporte; cancelar a renovação não gera reembolso automático. Direitos legais aplicáveis são preservados." },
       { q: "Como o Aliv.iA é diferente de um curso ou de só estudar Kapandji?", a: "Curso te dá teoria. O Aliv.iA te força a aplicar essa teoria em um fluxo real de avaliação, com decisões clínicas em sequência, feedback do mentor e correção. É a parte que falta entre saber e fazer." },
     ],
@@ -112,13 +112,13 @@ const COPY = {
     quote: "Studying physio is easy. Thinking like a physio is the real challenge. Aliv.iA Academic trains you on it every day.",
     whyTitle: "Why students choose Aliv.iA Academic",
     benefits: [
-      { icon: Brain, title: "Clinical AI Agent", desc: "Chat 24/7 with an agent trained on high-quality evidence (PEDro ≥ 7) for case doubts, differential diagnosis and management — no judgement, when the question hits." },
+      { icon: Brain, title: "Clinical AI Agent", desc: "Discuss cases, preliminary clinical hypotheses and management options with physiotherapy-focused AI supported by scientific evidence and clinical guidelines." },
       { icon: Lightbulb, title: "Mentor Mode", desc: "Turn on Mentor mode for step-by-step reasoning: why this hypothesis, what to rule out, which test to order and why." },
       { icon: UserPlus, title: "Register your internship patients", desc: "Add the patients you follow during internship to receive AI clinical impression with diagnostic hypothesis, and chat in the Clinical Chat with the real case attached — understand the picture deeply, get evidence-based treatment suggestions and clear any doubt on the spot." },
       { icon: MessageCircleQuestion, title: "Adaptive quizzes", desc: "Smart quizzes that adapt to your level and study niche. Spaced reinforcement to actually retain — not cram for exams." },
       { icon: Compass, title: "Knowledge Tracks", desc: "8 curated tracks: 3 foundation (anatomy, biomechanics, kinesiology) and 5 clinical by region (shoulder, low back, cervical, hip, knee), with evidence and protocols from basic to advanced." },
       { icon: FlaskConical, title: "Simulated Clinical Cases", desc: "Virtual patients with full history for you to assess from scratch: anamnesis, pain map, functional tests, hypothesis and plan. Make mistakes safely." },
-      { icon: BookOpen, title: "High-quality evidence", desc: "Knowledge base filtered by PEDro ≥ 7 and international guidelines. Study from what really backs evidence-based practice." },
+      { icon: BookOpen, title: "Evidence to study and discuss", desc: "Scientific papers and clinical guidelines organized to support studying and case discussions. Consult the sources and assess how they apply to the context." },
       { icon: Workflow, title: "Gold-standard assessment flow", desc: "Practice the full flow: structured anamnesis → red flags → pain map → ROM (goniometry) values → dynamometry with strength values → validated questionnaires → hypothesis → treatment." },
       { icon: Activity, title: "Theory to practice, faster", desc: "Every case uses the same tools professionals use with real patients. You arrive at internship knowing what to do." },
     ],
@@ -155,7 +155,7 @@ const COPY = {
       "Unlimited simulated clinical cases",
       "Gold-standard assessment: anamnesis, pain map, tests, questionnaires, hypothesis and treatment",
       "Automatic \"Aliv.iA Academic\" seal on PDFs and public links",
-      "Access to curated evidence (PEDro ≥ 7)",
+      "Access to the evidence library by niche",
       "Automatic migration to Professional profile when you add your license",
     ],
     cta: "Subscribe to Aliv.iA Academic",
@@ -166,7 +166,7 @@ const COPY = {
       { q: "Will I have to pay again when I graduate?", a: "No. Your subscription stays active after licensure. Just update your record in \"My account\" and the academic seal goes away automatically." },
       { q: "Can I treat real patients with Aliv.iA Academic?", a: "You can practice assessment, but any clinical conduct on real patients requires supervision by a licensed physiotherapist." },
       { q: "Is Mentor mode just text or does it actually guide the case?", a: "It guides. Mentor interrupts you at the right moment, suggests next tests, asks why you ruled out a hypothesis and explains why." },
-      { q: "Which knowledge tracks exist?", a: "Today 8 tracks: 3 foundation (Anatomy, Biomechanics, Kinesiology) covering the main body regions, and 5 clinical niches (shoulder, low back, cervical, hip, knee) — all filtered by PEDro ≥ 7." },
+      { q: "Which knowledge tracks exist?", a: "Today 8 tracks: 3 foundation (Anatomy, Biomechanics, Kinesiology) covering the main body regions, and 5 clinical niches (shoulder, low back, cervical, hip, knee) — with foundational content and clinical evidence organized for study." },
       { q: "What if I can't keep studying? Can I cancel?", a: "When cancelling an annual subscription, used months are recalculated at the same plan’s monthly rate, and the positive balance of the annual amount actually paid is refunded. Example: subscribed for 12 months and used 3 → refund = annual amount paid minus 3 monthly payments, not 9/12 of the total. If no positive balance remains, no refund is due under this calculation. Request a refund through support; cancelling renewal does not automatically issue a refund. Applicable statutory rights are preserved." },
       { q: "How is Alivia different from a course or just studying textbooks?", a: "Courses give you theory. Alivia forces you to apply it in a real assessment flow with sequential clinical decisions, mentor feedback and correction." },
     ],
@@ -181,13 +181,13 @@ const COPY = {
     quote: "Estudiar fisio es fácil. Pensar como fisio es el reto. Aliv.iA Académico te entrena todos los días.",
     whyTitle: "Por qué los estudiantes eligen Aliv.iA Académico",
     benefits: [
-      { icon: Brain, title: "Agente Clínico con IA", desc: "Chatea 24/7 con un agente entrenado en evidencia (PEDro ≥ 7) para dudas de caso, diagnóstico diferencial y conducta." },
+      { icon: Brain, title: "Agente Clínico con IA", desc: "Discute casos, hipótesis clínicas preliminares y opciones de manejo con IA especializada en fisioterapia, apoyada por evidencia científica y guías clínicas." },
       { icon: Lightbulb, title: "Modo Mentor", desc: "Activa el modo mentor y recibe explicaciones paso a paso del razonamiento clínico." },
       { icon: UserPlus, title: "Registra a tus pacientes de prácticas", desc: "Agrega los pacientes que sigues en prácticas y obtén impresión clínica con sugerencia de diagnóstico, además de chatear en el Chat Clínico vinculando el caso real — entiende el cuadro a fondo, recibe sugerencias de tratamiento basadas en evidencia y aclara cualquier duda al instante." },
       { icon: MessageCircleQuestion, title: "Quizzes adaptativos", desc: "Quizzes inteligentes que se adaptan a tu nivel y nicho de estudio." },
       { icon: Compass, title: "Rutas de Conocimiento", desc: "8 rutas curadas: 3 de base (anatomía, biomecánica y kinesiología) y 5 clínicas por región (hombro, lumbar, cervical, cadera, rodilla)." },
       { icon: FlaskConical, title: "Casos Clínicos Simulados", desc: "Pacientes virtuales con historia completa para evaluar desde cero." },
-      { icon: BookOpen, title: "Evidencia de alta calidad", desc: "Base filtrada por PEDro ≥ 7 y directrices internacionales." },
+      { icon: BookOpen, title: "Evidencia para estudiar y discutir", desc: "Artículos científicos y guías clínicas organizados para apoyar el estudio y la discusión de casos. Consulta las fuentes y evalúa cómo se aplican al contexto." },
       { icon: Workflow, title: "Flujo de evaluación estándar de oro", desc: "Practica el flujo completo: anamnesis → red flags → mapa de dolor → valores de ROM (goniometría) → dinamometría con valores de fuerza → cuestionarios → hipótesis → tratamiento." },
       { icon: Activity, title: "De la teoría a la práctica, más rápido", desc: "Cada caso usa las mismas herramientas que los profesionales usan con pacientes reales." },
     ],
@@ -224,7 +224,7 @@ const COPY = {
       "Casos clínicos simulados ilimitados",
       "Evaluación estándar de oro completa",
       "Sello \"Aliv.iA Académico\" automático en PDFs y enlaces públicos",
-      "Acceso a evidencia curada (PEDro ≥ 7)",
+      "Acceso a la biblioteca de evidencia por especialidad",
       "Migración automática al perfil Profesional al agregar tu colegiatura",
     ],
     cta: "Suscribirme a Aliv.iA Académico",
@@ -235,7 +235,7 @@ const COPY = {
       { q: "¿Tendré que pagar de nuevo cuando me gradúe?", a: "No. Tu suscripción sigue activa tras la colegiatura. Solo actualizas el registro en \"Mi cuenta\"." },
       { q: "¿Puedo atender pacientes reales con Aliv.iA Académico?", a: "Puedes practicar evaluación, pero toda conducta clínica en paciente real requiere supervisión de un fisioterapeuta colegiado." },
       { q: "¿El modo mentor es solo texto o guía el caso?", a: "Guía. Te interrumpe en el momento adecuado, sugiere el próximo test y explica el porqué." },
-      { q: "¿Cuáles son las rutas de conocimiento?", a: "Hoy 8 rutas: 3 de base (Anatomía, Biomecánica, Kinesiología) y 5 clínicas (hombro, lumbar, cervical, cadera, rodilla), todas filtradas por PEDro ≥ 7." },
+      { q: "¿Cuáles son las rutas de conocimiento?", a: "Hoy 8 rutas: 3 de base (Anatomía, Biomecánica, Kinesiología) y 5 clínicas (hombro, lumbar, cervical, cadera, rodilla), con contenidos de base y evidencia clínica organizados para el estudio." },
       { q: "¿Y si no logro mantener el estudio? ¿Puedo cancelar?", a: "Al cancelar una suscripción anual, los meses utilizados se recalculan al precio mensual del mismo plan y se reembolsa el saldo positivo del total anual efectivamente pagado. Ejemplo: contrató 12 meses y utilizó 3 → reembolso = total anual pagado menos 3 mensualidades, no 9/12 del total. Si no queda saldo positivo, no hay importe a devolver según este cálculo. Solicite el reembolso al soporte; cancelar la renovación no genera un reembolso automático. Se preservan los derechos legales aplicables." },
       { q: "¿En qué se diferencia Alivia de un curso?", a: "Los cursos dan teoría. Alivia te obliga a aplicarla en un flujo real de evaluación." },
     ],
@@ -244,7 +244,7 @@ const COPY = {
 
 const AcademicLandingClassic = () => {
   const navigate = useNavigate();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const { user } = useAuth();
   const [billing, setBilling] = useState<"monthly" | "annual">("annual");
   const c = COPY[language as keyof typeof COPY] ?? COPY.pt;
@@ -384,10 +384,10 @@ const AcademicLandingClassic = () => {
             </h2>
             <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
               {language === "pt"
-                ? "Estude pelos mesmos artigos curados (PEDro ≥ 7) que treinam a IA do Aliv.iA. Tudo dentro da página do Agente Clínico — sem caçar PDF, sem precisar abrir 12 abas."
+                ? "Consulte artigos selecionados por nicho, com referências bibliográficas para aprofundar seus estudos e discutir casos com o Agente Clínico. Organize suas leituras em um só lugar."
                 : language === "en"
-                ? "Study from the same curated papers (PEDro ≥ 7) that train the Aliv.iA AI. All inside the Clinical Agent page — no PDF hunting, no 12 tabs open."
-                : "Estudia con los mismos artículos curados (PEDro ≥ 7) que entrenan la IA de Aliv.iA. Todo dentro del Agente Clínico."}
+                ? "Browse papers selected by clinical niche, with bibliographic references to deepen your studies and discuss cases with the Clinical Agent. Organize your reading in one place."
+                : "Consulta artículos seleccionados por especialidad, con referencias bibliográficas para profundizar tus estudios y discutir casos con el Agente Clínico. Organiza tus lecturas en un solo lugar."}
             </p>
           </motion.div>
 
@@ -412,25 +412,26 @@ const AcademicLandingClassic = () => {
                     <span key={n} className={`rounded-full text-xs px-2.5 py-1 ${n === "Ombro" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>{n}</span>
                   ))}
                 </div>
-                <div className="flex gap-2 mb-4 text-xs">
+                <div className="flex flex-wrap gap-2 mb-4 text-xs">
                   <span className="rounded-md border border-border bg-background px-2 py-1 flex items-center gap-1"><Filter className="h-3 w-3" /> {language === "pt" ? "Ano: 2020+" : language === "en" ? "Year: 2020+" : "Año: 2020+"}</span>
-                  <span className="rounded-md border border-border bg-background px-2 py-1 flex items-center gap-1"><Filter className="h-3 w-3" /> PEDro ≥ 7</span>
+                  <span className="rounded-md border border-border bg-background px-2 py-1 flex items-center gap-1"><Filter className="h-3 w-3" /> {language === "pt" ? "PEDro: qualquer" : language === "en" ? "PEDro: any" : "PEDro: cualquiera"}</span>
                 </div>
                 <div className="space-y-2">
                   {[
-                    { t: "HSR vs Eccentric loading in rotator cuff…", y: "2024 · PEDro 8" },
-                    { t: "Scapular dyskinesis: clinical reasoning…", y: "2023 · PEDro 9" },
-                    { t: "Subacromial pain: graded exposure…", y: "2022 · PEDro 7" },
+                    { t: language === "pt" ? "Exercício resistido no ombro" : language === "en" ? "Shoulder resistance exercise" : "Ejercicio resistido del hombro" },
+                    { t: language === "pt" ? "Raciocínio clínico na lombalgia" : language === "en" ? "Clinical reasoning in low back pain" : "Razonamiento clínico en lumbalgia" },
+                    { t: language === "pt" ? "Retorno gradual à atividade" : language === "en" ? "Graded return to activity" : "Retorno gradual a la actividad" },
                   ].map((s, i) => (
                     <div key={i} className="flex items-start justify-between gap-3 rounded-lg border border-border/60 bg-background p-3">
                       <div className="min-w-0">
                         <p className="text-xs font-medium text-foreground truncate">{s.t}</p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">{s.y}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{language === "pt" ? "Exemplo de tema · ilustração" : language === "en" ? "Sample topic · illustration" : "Tema de ejemplo · ilustración"}</p>
                       </div>
                       <Star className={`h-4 w-4 shrink-0 ${i === 0 ? "fill-primary text-primary" : "text-muted-foreground"}`} />
                     </div>
                   ))}
                 </div>
+                <p className="text-xs text-muted-foreground mt-4 leading-relaxed">{t("evidence.pedro_note")}</p>
               </div>
 
               {/* Bullets */}
@@ -445,7 +446,7 @@ const AcademicLandingClassic = () => {
                     {
                       icon: Filter,
                       title: language === "pt" ? "Filtros de ano e nota PEDro" : language === "en" ? "Year and PEDro score filters" : "Filtros de año y nota PEDro",
-                      desc: language === "pt" ? "Foque no que é mais recente e mais robusto, sem ler resumo por resumo." : language === "en" ? "Focus on what's most recent and most robust, without scanning abstract by abstract." : "Enfócate en lo más reciente y más robusto.",
+                      desc: language === "pt" ? "Filtre por ano e consulte a nota PEDro quando disponível. A nota não se aplica a todos os tipos de estudo." : language === "en" ? "Filter by year and consult the PEDro score when available. The score does not apply to every study type." : "Filtra por año y consulta la puntuación PEDro cuando esté disponible. No se aplica a todos los tipos de estudio.",
                     },
                     {
                       icon: Star,
@@ -454,8 +455,8 @@ const AcademicLandingClassic = () => {
                     },
                     {
                       icon: ShieldCheck,
-                      title: language === "pt" ? "A mesma base que treina a IA" : language === "en" ? "Same base that trains the AI" : "La misma base que entrena la IA",
-                      desc: language === "pt" ? "Quando o Agente cita evidência, ela vem daqui. Você estuda o que ele pensa." : language === "en" ? "When the Agent cites evidence, it comes from here. You study what it thinks." : "Cuando el Agente cita evidencia, viene de aquí.",
+                      title: language === "pt" ? "Referências para discutir casos" : language === "en" ? "References for case discussions" : "Referencias para discutir casos",
+                      desc: language === "pt" ? "Consulte o artigo completo e discuta sua aplicação ao caso. Referência bibliográfica não substitui leitura crítica nem supervisão." : language === "en" ? "Read the full paper and discuss its application to the case. A bibliographic reference does not replace critical appraisal or supervision." : "Consulta el artículo completo y discute su aplicación al caso. Una referencia bibliográfica no sustituye la lectura crítica ni la supervisión.",
                     },
                   ].map((item, i) => (
                     <li key={i} className="flex items-start gap-3">

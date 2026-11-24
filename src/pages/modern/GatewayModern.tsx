@@ -381,7 +381,7 @@ const GatewayModern = () => {
                 </li>
                 <li className="flex items-start gap-2 text-sm text-foreground">
                   <BookOpen className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
-                  {language === "pt" ? "Trilhas e evidências PEDro ≥ 7" : language === "es" ? "Rutas y evidencia PEDro ≥ 7" : "Tracks and PEDro ≥ 7 evidence"}
+                  {language === "pt" ? "Trilhas clínicas e biblioteca de evidências" : language === "es" ? "Rutas clínicas y biblioteca de evidencia" : "Clinical tracks and evidence library"}
                 </li>
                 <li className="flex items-start gap-2 text-sm text-foreground">
                   <Lightbulb className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />

@@ -1,5 +1,10 @@
 # Roadmap
 
+## Landings — promessas sobre PEDro
+- [x] Acadêmico, PRO, Clínica, seletor de perfil e versões preservadas revisados: removida promessa universal PEDro ≥ 7 e notas sem fonte nos exemplos; mantida nota quando disponível, limitações metodológicas e leitura crítica. Nenhum filtro, dado, regra de curadoria, preço ou acesso alterado.
+- [x] Suporte PRO/Acadêmico e biblioteca no suporte clínico atualizados em pt/en/es; snapshots para buscadores sincronizados e JSON validado.
+- [x] 16 regressões passaram, build OK e diff sem erros. Sete páginas públicas nos três idiomas em desktop/390×844, FAQ acadêmica aberta, biblioteca do suporte clínico aberta/traduzida e Acadêmico → planos → entrada da assinatura conferidos, sem erros JS ou overflow. Versões clássicas conferidas em fonte, não ativadas no navegador. Pagamento/cadastro não submetidos; biblioteca real, curadoria, aparelho físico e publicação não exercitados nesta revisão de textos.
+
 ## Equipe Enterprise e traduções pontuais
 - [x] Removido somente ∞: título passa a (2/Enterprise); contagem, plano, limites e permissões preservados.
 - [x] Status completed usa a tradução já existente; surgery/less_1 adicionados em pt/en/es e ao caminho próprio da anamnese, mantendo valores salvos e a distinção entre menos de uma vez e uma vez ou menos por semana.

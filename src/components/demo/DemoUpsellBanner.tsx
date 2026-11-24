@@ -30,7 +30,7 @@ const COPY: Record<Section, { title: string; desc: string }> = {
   "pro-messages":{ title: "Mensagens com pacientes (PRO)",              desc: "Chat seguro + videochamada, dentro da Aliv.iA, sem WhatsApp pessoal." },
   "pro-patients":{ title: "Prontuário com IA e relatório de evolução",  desc: "Anamnese assistida por voz, plano de tratamento adaptativo e PDF white-label." },
   "agente":      { title: "Agente de Raciocínio Clínico (PRO)",         desc: "Discuta casos (com anonimização automática), gere HEP baseado em evidências e vincule pacientes — direto no chat." },
-  "pro-agent":   { title: "Agente de Raciocínio Clínico (PRO)",         desc: "Copiloto clínico para discutir casos, sugerir testes e gerar HEP — com evidência PEDro ≥ 7." },
+  "pro-agent":   { title: "Agente de Raciocínio Clínico (PRO)",         desc: "Copiloto clínico para discutir casos, sugerir testes e gerar HEP — com apoio de evidências científicas e diretrizes clínicas." },
 };
 
 

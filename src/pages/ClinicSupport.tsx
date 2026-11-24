@@ -241,8 +241,8 @@ const categories: ToolCategory[] = [
       {
         key: "evidence_library",
         icon: BookOpen,
-        title: "Biblioteca de Evidências por Nicho (PEDro validado)",
-        desc: "Acesso integrado, dentro do Agente Clínico, à curadoria de artigos aprovados e usados pela própria IA — separados por nicho, com DOI/PMID e crivo PEDro. RCTs só entram com nota oficial PEDro ≥ 7; revisões/meta-análises com PEDro N/A ficam sem nota numérica. Disponível para Acadêmico assinante/parceiro acadêmico, PRO e Clínica.",
+        title: "Biblioteca de Evidências por Nicho",
+        desc: "Consulte artigos selecionados por nicho dentro do Agente Clínico, com referências bibliográficas, filtros de ano, nota PEDro quando disponível e favoritos. A PEDro avalia aspectos metodológicos de ensaios clínicos; não se aplica a todos os tipos de estudo. N/A não é nota zero e não garante nem descarta qualidade. Identificador confirmado não substitui leitura crítica. Disponível para Acadêmico assinante/parceiro acadêmico, PRO e Clínica.",
       },
       {
         key: "ai_credits_control",
@@ -685,11 +685,11 @@ const ClinicSupport = () => {
                               <AccordionTrigger className="text-left text-base font-medium text-foreground gap-3">
                                 <span className="flex items-center gap-3">
                                   <ItemIcon className="h-4 w-4 text-primary shrink-0" />
-                                  {item.key === "patient_daily_care" ? t(`clinic.support.tool.${item.key}.title`) : item.key === "spine_maigne" || item.key === "insights_funnel" || item.key === "insights_management" || item.key === "studio_cardiorespiratory" || item.key === "studio_ecosystem" ? t(`support.pro.tool.${item.key}.title`) : item.title}
+                                  {item.key === "patient_daily_care" || item.key === "evidence_library" ? t(`clinic.support.tool.${item.key}.title`) : item.key === "spine_maigne" || item.key === "insights_funnel" || item.key === "insights_management" || item.key === "studio_cardiorespiratory" || item.key === "studio_ecosystem" ? t(`support.pro.tool.${item.key}.title`) : item.title}
                                 </span>
                               </AccordionTrigger>
                               <AccordionContent className="text-muted-foreground leading-relaxed pl-7">
-                                {item.key === "patient_daily_care" ? t(`clinic.support.tool.${item.key}.desc`) : item.key === "spine_maigne" || item.key === "insights_funnel" || item.key === "insights_management" || item.key === "studio_cardiorespiratory" || item.key === "studio_ecosystem" ? t(`support.pro.tool.${item.key}.desc`) : item.desc}
+                                {item.key === "patient_daily_care" || item.key === "evidence_library" ? t(`clinic.support.tool.${item.key}.desc`) : item.key === "spine_maigne" || item.key === "insights_funnel" || item.key === "insights_management" || item.key === "studio_cardiorespiratory" || item.key === "studio_ecosystem" ? t(`support.pro.tool.${item.key}.desc`) : item.desc}
                               </AccordionContent>
                             </AccordionItem>
                           );

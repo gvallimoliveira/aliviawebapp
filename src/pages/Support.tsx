@@ -337,11 +337,7 @@ const Support = () => {
                         <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary tracking-wide">BETA</span>
                       </div>
                       <p className="text-sm text-muted-foreground leading-relaxed mb-2">
-                        {language === "pt"
-                          ? "Acesse, dentro da página do Agente Clínico, a curadoria de artigos aprovados com DOI/PMID e nota PEDro validados — RCTs só entram com PEDro ≥ 7 oficial; revisões com PEDro N/A ficam sem nota numérica. Favorite estudos para consultar em 1 clique."
-                          : language === "es"
-                          ? "Accede, dentro del Agente Clínico, a artículos aprobados con DOI/PMID y puntuación PEDro validados — los RCT solo entran con PEDro ≥ 7 oficial; revisiones con PEDro N/A quedan sin puntuación numérica."
-                          : "Inside the Clinical Agent page, browse approved studies with validated DOI/PMID and PEDro status — RCTs require official PEDro ≥ 7; reviews with PEDro N/A are kept without a numeric score."}
+                        {t("support.evidence.library.desc")}
                       </p>
                       <p className="text-xs text-muted-foreground italic">
                         {language === "pt"

@@ -1,4 +1,8 @@
 {
+  "clinic.support.tool.evidence_library.title": "Evidence Library by Niche",
+  "clinic.support.tool.evidence_library.desc": "Browse papers selected by niche inside the Clinical Agent, with bibliographic references, year filters, PEDro scores when available and favorites. PEDro assesses methodological aspects of clinical trials; it does not apply to every study type. N/A does not mean zero. A confirmed identifier does not certify quality or replace critical appraisal. Available to Academic subscribers/academic partners, PRO and Clinic.",
+  "evidence.pedro_note": "PEDro scores are shown when available and assess methodological aspects of clinical trials. They do not apply to every study type; N/A does not mean zero. Critical appraisal is still necessary.",
+  "support.evidence.library.desc": "Browse papers selected by niche in the Clinical Agent, with bibliographic references, year filters, PEDro scores when available and favorites. Scores assess methodological aspects of clinical trials, not every study type; N/A is not zero. A confirmed identifier does not certify quality or relevance to a case: read and critically appraise the source before citing or deciding.",
   "clinic.how_it_works.hypothesis": "AI suggests a preliminary clinical hypothesis when the assessment is completed, for physiotherapist review",
   "support.pro.tool.demo_registration.title": "Demo registration",
   "support.pro.tool.demo_registration.desc": "Adding or editing a registration in the demo changes only the simulated list on this page. Reloading clears these changes. It creates no real patients or assessments and uses no AI credits; solo and clinic data stay separate.",

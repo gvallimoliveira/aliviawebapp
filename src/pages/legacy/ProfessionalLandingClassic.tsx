@@ -339,16 +339,17 @@ const ProfessionalLandingClassic = () => {
                 </h2>
                 <p className="text-base text-muted-foreground leading-relaxed mb-5">
                   {language === "pt"
-                    ? "Os mesmos artigos curados (PEDro ≥ 7) que alimentam a IA agora ficam disponíveis para você consultar, filtrar e favoritar. Acesse pela página do Agente, segmentado por nicho, com filtros de ano e nota PEDro — sem precisar abrir outra aba ou caçar PDF."
+                    ? "Consulte, filtre e favorite artigos selecionados por nicho clínico dentro do Agente. A biblioteca reúne referências para aprofundar a leitura e apoiar a discussão de casos, com filtros de ano e nota PEDro."
                     : language === "es"
-                    ? "Los mismos artículos curados (PEDro ≥ 7) que alimentan la IA ahora están disponibles para consultar, filtrar y marcar como favoritos. Accede desde la página del Agente, segmentado por nicho, con filtros de año y nota PEDro."
-                    : "The same curated studies (PEDro ≥ 7) that power the AI are now yours to browse, filter and favorite — right from the Clinical Agent page, sorted by niche with year and PEDro score filters."}
+                    ? "Consulta, filtra y marca como favoritos artículos seleccionados por especialidad dentro del Agente. La biblioteca reúne referencias para profundizar la lectura y apoyar la discusión de casos, con filtros de año y puntuación PEDro."
+                    : "Browse, filter and favorite papers selected by clinical niche inside the Agent. The library brings together references for further reading and case discussions, with year and PEDro score filters."}
+                  <span className="block text-sm mt-3">{t("evidence.pedro_note")}</span>
                 </p>
                 <ul className="grid sm:grid-cols-2 gap-2.5 text-sm text-foreground">
                   <li className="flex items-start gap-2"><BookOpen className="h-4 w-4 text-primary mt-0.5 shrink-0" />{language === "pt" ? "Segmentado por nicho clínico" : language === "es" ? "Segmentado por nicho clínico" : "Sorted by clinical niche"}</li>
                   <li className="flex items-start gap-2"><Filter className="h-4 w-4 text-primary mt-0.5 shrink-0" />{language === "pt" ? "Filtros de ano e nota PEDro" : language === "es" ? "Filtros de año y nota PEDro" : "Year and PEDro score filters"}</li>
                   <li className="flex items-start gap-2"><Star className="h-4 w-4 text-primary mt-0.5 shrink-0" />{language === "pt" ? "Favorite estudos para acesso rápido" : language === "es" ? "Marca favoritos para acceso rápido" : "Favorite studies for quick access"}</li>
-                  <li className="flex items-start gap-2"><ShieldCheck className="h-4 w-4 text-primary mt-0.5 shrink-0" />{language === "pt" ? "Mesma base usada pela IA do Aliv.iA" : language === "es" ? "Misma base usada por la IA de Aliv.iA" : "Same base the Aliv.iA AI uses"}</li>
+                  <li className="flex items-start gap-2"><ShieldCheck className="h-4 w-4 text-primary mt-0.5 shrink-0" />{language === "pt" ? "Referências para discutir com o Agente" : language === "es" ? "Referencias para discutir con el Agente" : "References to discuss with the Agent"}</li>
                 </ul>
               </div>
               <div className="rounded-2xl border border-border/60 bg-card/90 backdrop-blur-sm p-5 shadow-sm">

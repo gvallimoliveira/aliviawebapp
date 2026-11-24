@@ -183,7 +183,7 @@ const ClinicLandingClassic = () => {
         { icon: TrendingUp, title: "Antes vs Depois", desc: "Relatório comparativo automatizado para alta" },
         { icon: Activity, title: "Progressão de exercícios", desc: "Sugestões com base em adesão e dor" },
         { icon: Camera, title: "OCR de agenda", desc: "Importe agendamentos de qualquer app por foto" },
-        { icon: BookOpen, title: "Biblioteca de Evidências por Nicho", desc: "Curadoria PEDro ≥ 7 acessível dentro do Agente Clínico, filtrada por nicho, ano e nota — a mesma base que alimenta a IA" },
+        { icon: BookOpen, title: "Biblioteca de Evidências por Nicho", desc: "Artigos selecionados por nicho para consulta no Agente Clínico, com referências bibliográficas, filtros de ano e nota PEDro quando disponível" },
       ],
     },
     {
