@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -103,6 +104,7 @@ const Assessment = () => {
   const [treatmentPlan, setTreatmentPlan] = useState<any>(null);
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
   const [additionalInfo, setAdditionalInfo] = useState("");
   const [hasRetried, setHasRetried] = useState(false);
   const [isMonthly, setIsMonthly] = useState(true);
@@ -392,6 +394,20 @@ const Assessment = () => {
       if (error) throw error;
       setPremiumAccess(data);
       if (data?.has_access) {
+        // Reuse the purchased assessment instead of creating a second covered one.
+        const { data: purchasedAssessment, error: purchaseReadError } = await supabase
+          .from("assessments")
+          .select("id")
+          .eq("user_id", user?.id || "")
+          .eq("type", "premium")
+          .eq("payment_status", "paid")
+          .eq("status", "in_progress")
+          .is("clinic_id", null)
+          .is("professional_id", null)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (purchaseReadError) throw purchaseReadError;
         // Check for upgrade data: first from localStorage, then from DB (boleto flow)
         const upgradeData = getUpgradeData();
         if (upgradeData?.anamnesisData) {
@@ -400,15 +416,12 @@ const Assessment = () => {
           if (upgradeData.capturedName) setCapturedName(upgradeData.capturedName);
           if (upgradeData.capturedEmail) setCapturedEmail(upgradeData.capturedEmail);
           setIsUpgradeFlow(true);
-          clearUpgradeData();
-
-          const { data: newAssessment, error: insertError } = await supabase
-            .from("assessments")
-            .insert({
+          const assessmentValues = {
               type: "premium",
               status: "in_progress",
               user_id: user?.id || null,
-              payment_status: "covered",
+              payment_status: purchasedAssessment ? "paid" : "covered",
+              pending_upgrade_data: null,
               anamnesis_data: upgradeData.anamnesisData as any,
               pain_regions: upgradeData.painRegions || [],
               pain_extent: painExtentValue(upgradeData.painRegions || []),
@@ -418,12 +431,18 @@ const Assessment = () => {
               red_flags: (upgradeData.redFlagPayload
                 ? { ...upgradeData.redFlagPayload, carried_from_basic: true }
                 : redFlagPayload) as any,
-            })
+            };
+          const write = purchasedAssessment
+            ? supabase.from("assessments").update(assessmentValues).eq("id", purchasedAssessment.id).eq("user_id", user?.id || "")
+            : supabase.from("assessments").insert(assessmentValues);
+          const { data: newAssessment, error: insertError } = await write
             .select("id")
             .single();
+          if (insertError) throw insertError;
           if (!insertError && newAssessment) {
             setAssessmentId(newAssessment.id);
           }
+          clearUpgradeData();
           setStep("questionnaire");
           return;
         }
@@ -485,6 +504,7 @@ const Assessment = () => {
       const basicData = getBasicUpgradePayload();
       const body: any = {
         payment_type: isMonthly ? "monthly" : "single",
+        ...(couponCode.trim() ? { coupon: couponCode.trim() } : {}),
         ...(basicData ? { basic_upgrade_data: basicData } : {}),
       };
       if (referralCode) body.referral_code = referralCode;
@@ -1077,6 +1097,13 @@ const Assessment = () => {
                     </div>
                   )}
 
+                  <div className="space-y-2">
+                    <label htmlFor="premium-coupon" className="text-sm font-medium text-foreground">
+                      {language === "pt" ? "Cupom (opcional)" : language === "es" ? "Cupón (opcional)" : "Coupon (optional)"}
+                    </label>
+                    <Input id="premium-coupon" value={couponCode} onChange={(event) => setCouponCode(event.target.value)}
+                      maxLength={100} autoCapitalize="characters" autoComplete="off" disabled={paymentLoading} />
+                  </div>
                   <Button
                     onClick={handlePayment}
                     disabled={paymentLoading}

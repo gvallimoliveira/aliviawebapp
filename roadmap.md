@@ -328,3 +328,8 @@
 - [ ] Encerrar/desvincular acompanhamento: hoje `get_my_care_providers()` liga o paciente por e-mail a qualquer registro histórico, então o painel pessoal segue "acompanhado" após a alta. Proposta: estado da relação separado do prontuário (ativo / encerrado pelo profissional / desvinculado pelo paciente), RPC retornando só vínculos ativos, histórico do profissional preservado, confirmação explícita do paciente.
 - [ ] Vários fisioterapeutas ao mesmo tempo: a base já retorna mais de um provedor; falta separar exercícios por profissional/queixa, contextualizar o banner e manter o check-in diário único com dor por região.
 - [ ] Ordem combinada: primeiro desvinculação, depois experiência multi-profissional. Aguarda o Guilherme retomar; começar pela especificação da desvinculação.
+
+## Cupom gravacao100 — gravação básica → premium
+- [ ] Habilitar cupom no pagamento do paciente e validar liberação gratuita restrita à compra avulsa concluída.
+- [ ] Criar gravacao100 restrito à conta de gravação e ao produto avulso; aguarda e-mail do Guilherme.
+- [ ] Validar checkout e retorno com continuidade dos dados; manter cobrança normal e boleto intactos.

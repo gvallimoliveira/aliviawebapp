@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { isComplimentaryPremiumCheckout } from "../_shared/premiumCheckout.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -45,7 +46,14 @@ serve(async (req) => {
     if (session_id) {
       const session = await stripe.checkout.sessions.retrieve(session_id);
 
-      if (session.payment_status !== "paid") {
+      if (session.metadata?.user_id !== user.id) {
+        return new Response(JSON.stringify({ paid: false, error: "session_not_owned" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (session.payment_status !== "paid" && !isComplimentaryPremiumCheckout(session)) {
         // Check if this is a pending async payment (boleto)
         const isPending = session.payment_status === "unpaid" && session.status === "complete";
         return new Response(JSON.stringify({ 
@@ -153,21 +161,22 @@ serve(async (req) => {
       if (pendingAssessmentId) {
         const { data: pendingAssessment } = await supabaseClient
           .from("assessments")
-          .select("id")
+          .select("id, payment_status")
           .eq("id", pendingAssessmentId)
           .eq("user_id", user.id)
-          .eq("payment_status", "awaiting_payment")
+          .eq("type", "premium")
+          .in("payment_status", ["awaiting_payment", "paid"])
           .maybeSingle();
 
         if (pendingAssessment) {
-          await supabaseClient
+          const { error: promoteError } = await supabaseClient
             .from("assessments")
             .update({
               payment_status: "paid",
               paid_at: new Date().toISOString(),
-              pending_upgrade_data: null,
             })
             .eq("id", pendingAssessment.id);
+          if (promoteError) throw promoteError;
           
           return new Response(JSON.stringify({ paid: true }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -192,7 +201,6 @@ serve(async (req) => {
           .update({
             payment_status: "paid",
             paid_at: new Date().toISOString(),
-            pending_upgrade_data: null,
           })
           .eq("id", awaitingAssessment.id);
 

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { safeOrigin } from "../_shared/caller-auth.ts";
+import { checkoutPromotionOptions } from "../_shared/premiumCheckout.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
@@ -35,12 +36,14 @@ serve(async (req) => {
     let paymentType: "monthly" | "single" = "monthly";
     let exitIntentDiscount = false;
     let basicUpgradeData: any = null;
+    let couponCode = "";
     try {
       const body = await req.json();
       referralCode = body?.referral_code || null;
       if (body?.payment_type === "single") paymentType = "single";
       if (body?.exit_intent_discount === true) exitIntentDiscount = true;
       if (body?.basic_upgrade_data) basicUpgradeData = body.basic_upgrade_data;
+      if (typeof body?.coupon === "string") couponCode = body.coupon.trim().toUpperCase();
     } catch {
       // No body or invalid JSON
     }
@@ -48,6 +51,14 @@ serve(async (req) => {
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
     });
+
+    let promotionId: string | undefined;
+    if (couponCode) {
+      if (couponCode.length > 100) throw new Error("Cupom inválido.");
+      const codes = await stripe.promotionCodes.list({ code: couponCode, active: true, limit: 1 });
+      if (!codes.data[0]) throw new Error("Cupom inválido ou expirado.");
+      promotionId = codes.data[0].id;
+    }
 
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId;
@@ -68,7 +79,7 @@ serve(async (req) => {
       .limit(1)
       .single();
 
-    if (availableReward?.stripe_coupon_id) {
+    if (!promotionId && availableReward?.stripe_coupon_id) {
       discountCoupon = availableReward.stripe_coupon_id;
       await supabaseAdmin
         .from("referral_rewards")
@@ -132,7 +143,9 @@ serve(async (req) => {
 
     // Discount priority: exit_intent (10%) > referral for referred user (10%) > referral for referrer (20%)
     // Only one discount per checkout — non-cumulative
-    if (exitIntentDiscount && paymentType === "single") {
+    if (promotionId) {
+      sessionParams.discounts = [{ promotion_code: promotionId }];
+    } else if (exitIntentDiscount && paymentType === "single") {
       const exitCoupon = await stripe.coupons.create({
         percent_off: 10,
         duration: "once",
@@ -155,6 +168,7 @@ serve(async (req) => {
       sessionParams.discounts = [{ coupon: discountCoupon }];
     }
 
+    Object.assign(sessionParams, checkoutPromotionOptions(sessionParams.discounts));
     const session = await stripe.checkout.sessions.create(sessionParams);
 
     return new Response(JSON.stringify({ url: session.url }), {

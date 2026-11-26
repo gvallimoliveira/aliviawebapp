@@ -3,6 +3,7 @@ import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { paidCreditPackage } from "../_shared/ai-credit-catalog.ts";
 import { provisionClinic, resolveMaxMembers } from "../_shared/clinicProvisioning.ts";
+import { isComplimentaryPremiumCheckout } from "../_shared/premiumCheckout.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
   apiVersion: "2025-08-27.basil",
@@ -232,9 +233,10 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   });
 
   // Trial PRO de 7 dias: o Checkout termina sem cobrança ("no_payment_required").
-  // Só vale para assinaturas; demais produtos continuam exigindo "paid".
+  // Preserve subscription trials; only a fully discounted patient single purchase
+  // may additionally fulfill without a charge. Other products still require paid.
   const trialStart = session.mode === "subscription" && session.payment_status === "no_payment_required";
-  if (session.payment_status === "paid" || trialStart) {
+  if (session.payment_status === "paid" || trialStart || isComplimentaryPremiumCheckout(session)) {
     await fulfillOrder(session);
     EdgeRuntime.waitUntil(alertSale(session, "sync"));
   } else {
@@ -614,21 +616,22 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
         if (pendingAssessmentId) {
           const { data: pendingAssessment } = await supabase
             .from("assessments")
-            .select("id, pending_upgrade_data")
+            .select("id, payment_status")
             .eq("id", pendingAssessmentId)
             .eq("user_id", userId)
-            .eq("payment_status", "awaiting_payment")
+            .eq("type", "premium")
+            .in("payment_status", ["awaiting_payment", "paid"])
             .single();
 
           if (pendingAssessment) {
-            await supabase
+            const { error: promoteError } = await supabase
               .from("assessments")
               .update({
                 payment_status: "paid",
                 paid_at: new Date().toISOString(),
-                pending_upgrade_data: null,
               })
               .eq("id", pendingAssessmentId);
+            if (promoteError) throw promoteError;
             log("Pending assessment promoted to paid", { pendingAssessmentId, userId });
             break;
           }
@@ -650,7 +653,6 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
             .update({
               payment_status: "paid",
               paid_at: new Date().toISOString(),
-              pending_upgrade_data: null,
             })
             .eq("id", awaitingAssessment.id);
           log("Awaiting assessment promoted to paid", { assessmentId: awaitingAssessment.id, userId });
