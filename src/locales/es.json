@@ -1372,6 +1372,8 @@
   "push.disable": "Desactivar",
   "push.enabled_toast": "¡Notificaciones activadas exitosamente!",
   "support.contact.title": "¿No encontraste tu respuesta?",
+  "support.patient.faq.patient_coupon.q": "¿Cómo usar un cupón en la evaluación personal?",
+  "support.patient.faq.patient_coupon.a": "En la pantalla de compra Premium, elija el plan autorizado por el cupón y complete Cupón (opcional) antes de Pagar y empezar. Revise el total antes de finalizar. Los cupones pueden tener vencimiento, límite de usos y restricciones de cuenta o producto; no se acumulan con descuentos automáticos. Si el cupón cubre el 100% de una compra individual, finalice el pedido sin cobro y retome la evaluación. Esto no crea una suscripción mensual. El enlace institucional de la clínica sigue siendo independiente de esta compra.",
   "support.contact.desc": "Envíanos un mensaje y te responderemos lo antes posible.",
   "support.contact.subject": "Asunto",
   "support.contact.subject_placeholder": "Resumen de tu consulta",

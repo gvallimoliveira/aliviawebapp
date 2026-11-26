@@ -1372,6 +1372,8 @@
   "push.disable": "Disable",
   "push.enabled_toast": "Notifications enabled successfully!",
   "support.contact.title": "Didn't find your answer?",
+  "support.patient.faq.patient_coupon.q": "How do I use a coupon for a personal assessment?",
+  "support.patient.faq.patient_coupon.a": "On the Premium purchase screen, choose the plan allowed by your coupon and fill Coupon (optional) before Pay and start. Check the checkout total before completing the order. Coupons can have an expiry, usage limit and account or product restrictions; they do not stack with automatic discounts. If a coupon covers 100% of a single purchase, complete the order without a charge and resume the assessment. This does not create a monthly subscription. Institutional clinic links remain independent of this purchase.",
   "support.contact.desc": "Send us a message and we'll get back to you as soon as possible.",
   "support.contact.subject": "Subject",
   "support.contact.subject_placeholder": "Brief summary of your question",

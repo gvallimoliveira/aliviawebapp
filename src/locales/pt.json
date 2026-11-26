@@ -1372,6 +1372,8 @@
   "push.disable": "Desativar",
   "push.enabled_toast": "Notificações ativadas com sucesso!",
   "support.contact.title": "Não encontrou sua resposta?",
+  "support.patient.faq.patient_coupon.q": "Como usar um cupom na avaliação pessoal?",
+  "support.patient.faq.patient_coupon.a": "Na tela de compra da avaliação Premium, escolha o plano autorizado pelo cupom e preencha Cupom (opcional) antes de Pagar e começar. Confira o total no checkout antes de concluir. Cupons podem ter validade, limite de usos e restrição de conta ou produto; não acumulam com descontos automáticos. Se o desconto cobrir 100% da compra avulsa, conclua o pedido sem cobrança e retome a avaliação. Isso não cria assinatura mensal. O link institucional da clínica permanece independente dessa compra.",
   "support.contact.desc": "Envie uma mensagem para nosso suporte e responderemos o mais breve possível.",
   "support.contact.subject": "Assunto",
   "support.contact.subject_placeholder": "Resumo da sua dúvida",

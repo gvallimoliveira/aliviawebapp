@@ -330,6 +330,7 @@
 - [ ] Ordem combinada: primeiro desvinculação, depois experiência multi-profissional. Aguarda o Guilherme retomar; começar pela especificação da desvinculação.
 
 ## Cupom gravacao100 — gravação básica → premium
-- [ ] Habilitar cupom no pagamento do paciente e validar liberação gratuita restrita à compra avulsa concluída.
-- [ ] Criar gravacao100 restrito à conta de gravação e ao produto avulso; aguarda e-mail do Guilherme.
-- [ ] Validar checkout e retorno com continuidade dos dados; manter cobrança normal e boleto intactos.
+- [x] Habilitar cupom no pagamento do paciente e liberação gratuita apenas para compra avulsa concluída, total zero e desconto integral; 21 testes aprovados, build OK.
+- [x] gravacao100 ativo, restrito ao cliente indicado e produto avulso, 3 usos até 02/12/2026 22:16 (Brasília); nenhum uso consumido.
+- [x] Checkout real da conta indicada zerado sem concluir. Compra descartável concluída, confirmação e retomada nos questionários com dados básicos restaurados; apenas um registro pago, sem duplicação. Boleto e demais produtos cobertos por regressões; suporte pt/en/es atualizado.
+- [ ] Gravação completa e publicação: testes não geraram hipóteses/planos com IA nem completaram avaliações na conta indicada, para preservar a gravação. Publicação depende do Guilherme.
