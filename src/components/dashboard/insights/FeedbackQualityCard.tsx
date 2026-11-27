@@ -10,11 +10,13 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import InsightCardShell from "./InsightCardShell";
 import {
-  ATTENTION_THRESHOLD_PCT, MIN_ANSWERS_FOR_ALERT, areaScores, attentionPoints, byService, filterByPeriod,
+  ATTENTION_THRESHOLD_PCT, MIN_ANSWERS_FOR_ALERT, FEEDBACK_ITEMS, areaScores, attentionPoints, byService, filterByPeriod,
   monthlyTrend, npsSummary, responseDetails, type FeedbackRow, type ItemScore, type Sentiment,
 } from "@/lib/feedbackMetrics";
 import { answerLabel, areaLabel, commentAreaLabel, itemLabel, sentimentLabel, serviceLabel, type FbLang } from "@/lib/feedbackLabels";
 import { downloadFeedbackCsv, printFeedbackReport } from "@/lib/feedbackExport";
+import { useFeedbackClinicians } from "@/hooks/useFeedbackClinicians";
+import { feedbackByClinician, feedbackClinicianKey, filterFeedbackClinician } from "@/lib/feedbackClinicians";
 
 type Period = "30" | "90" | "365" | "all";
 type VoiceFilter = "all" | "comments" | "low";
@@ -58,13 +60,15 @@ const FeedbackQualityCard = ({ clinicId }: { clinicId: string }) => {
   const [service, setService] = useState("all");
   const [voice, setVoice] = useState<VoiceFilter>("all");
   const [shown, setShown] = useState(PAGE);
+  const [professional, setProfessional] = useState("all");
+  const { data: clinicians = [] } = useFeedbackClinicians(clinicId);
 
   const { data: all = [], isLoading, isError } = useQuery({
     queryKey: ["clinic-feedback", clinicId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("clinic_feedback_surveys")
-        .select("id, created_at, service_type, professional_id, service_answers, professional_answers, clinic_answers, general_observations")
+        .select("id, created_at, service_type, professional_id, clinician_member_id, clinician_name, service_answers, professional_answers, clinic_answers, general_observations")
         .eq("clinic_id", clinicId)
         .order("created_at", { ascending: false })
         .limit(1000);
@@ -74,22 +78,34 @@ const FeedbackQualityCard = ({ clinicId }: { clinicId: string }) => {
   });
 
   const days = period === "all" ? null : Number(period);
+  const professionalOptions = useMemo(() => {
+    const options = new Map<string, string>();
+    clinicians.forEach((c) => options.set(`member:${c.member_id}`, c.full_name));
+    all.forEach((r) => {
+      const key = feedbackClinicianKey(r);
+      if (!options.has(key)) options.set(key, r.clinician_name || (key === "unassigned" ? t("Sem profissional identificado", "No identified professional", "Sin profesional identificado") : t("Profissional — registro antigo", "Professional — legacy record", "Profesional — registro antiguo")));
+    });
+    return [...options.entries()];
+  }, [all, clinicians, l]);
+  const activeProfessional = professional === "all" || professionalOptions.some(([key]) => key === professional) ? professional : "all";
+  const professionalRows = useMemo(() => filterFeedbackClinician(all, activeProfessional), [all, activeProfessional]);
   const services = useMemo(() => [...new Set(all.map((r) => r.service_type))], [all]);
   const activeService = service !== "all" && !services.includes(service) ? "all" : service;
-  const scoped = useMemo(() => (activeService === "all" ? all : all.filter((r) => r.service_type === activeService)), [all, activeService]);
+  const scoped = useMemo(() => (activeService === "all" ? professionalRows : professionalRows.filter((r) => r.service_type === activeService)), [professionalRows, activeService]);
   const rows = useMemo(() => filterByPeriod(scoped, days), [scoped, days]);
   const nps = useMemo(() => npsSummary(rows), [rows]);
   const prev = useMemo(() => (days === null ? null : npsSummary(filterByPeriod(scoped, days, new Date(), days))), [scoped, days]);
   const areas = useMemo(() => areaScores(rows), [rows]);
   const alerts = useMemo(() => attentionPoints(areas), [areas]);
   const trend = useMemo(() => monthlyTrend(rows), [rows]);
-  const perService = useMemo(() => byService(filterByPeriod(all, days)), [all, days]);
+  const perService = useMemo(() => byService(filterByPeriod(professionalRows, days)), [professionalRows, days]);
   const details = useMemo(() => responseDetails(rows), [rows]);
+  const perProfessional = useMemo(() => feedbackByClinician(rows), [rows]);
   const voices = details.filter((d) => (voice === "comments" ? d.comments.length > 0 : voice === "low" ? d.hasLowRating : true));
 
   const delta = prev && nps.nps !== null && prev.nps !== null && nps.answered >= MIN_ANSWERS_FOR_ALERT && prev.answered >= MIN_ANSWERS_FOR_ALERT ? nps.nps - prev.nps : null;
   const periodLabel = { "30": t("Últimos 30 dias", "Last 30 days", "Últimos 30 días"), "90": t("Últimos 90 dias", "Last 90 days", "Últimos 90 días"), "365": t("Últimos 12 meses", "Last 12 months", "Últimos 12 meses"), all: t("Todo o período", "All time", "Todo el período") };
-  const scopeLabel = `${periodLabel[period]} · ${activeService === "all" ? t("Todos os serviços", "All services", "Todos los servicios") : serviceLabel(activeService, l)}`;
+  const scopeLabel = `${periodLabel[period]} · ${activeService === "all" ? t("Todos os serviços", "All services", "Todos los servicios") : serviceLabel(activeService, l)} · ${activeProfessional === "all" ? t("Todos os profissionais", "All professionals", "Todos los profesionales") : professionalOptions.find(([key]) => key === activeProfessional)?.[1]}`;
   const pick = (v: VoiceFilter) => { setVoice(v); setShown(PAGE); };
 
   const info = (
@@ -133,6 +149,13 @@ const FeedbackQualityCard = ({ clinicId }: { clinicId: string }) => {
                 {services.map((s) => <SelectItem key={s} value={s} className="text-xs">{serviceLabel(s, l)}</SelectItem>)}
               </SelectContent>
             </Select>
+            <Select value={activeProfessional} onValueChange={(v) => { setProfessional(v); setShown(PAGE); }}>
+              <SelectTrigger className="h-8 w-[220px] text-xs" aria-label={t("Filtrar profissional", "Filter professional", "Filtrar profesional")}><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("Todos os profissionais", "All professionals", "Todos los profesionales")}</SelectItem>
+                {professionalOptions.map(([key, name]) => <SelectItem key={key} value={key}>{name}</SelectItem>)}
+              </SelectContent>
+            </Select>
             {rows.length > 0 && (
               <div className="ml-auto flex gap-2">
                 <Button type="button" variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => { downloadFeedbackCsv(rows, l); toast({ title: t("Planilha exportada", "Spreadsheet exported", "Planilla exportada") }); }}>
@@ -147,8 +170,8 @@ const FeedbackQualityCard = ({ clinicId }: { clinicId: string }) => {
 
           {rows.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
-              <p>{t("Nenhuma resposta neste período ou serviço.", "No responses for this period or service.", "Ninguna respuesta en este período o servicio.")}</p>
-              <Button type="button" variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => { setPeriod("all"); setService("all"); }}>
+              <p>{t("Nenhuma resposta nestes filtros.", "No responses for these filters.", "Ninguna respuesta con estos filtros.")}</p>
+              <Button type="button" variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => { setPeriod("all"); setService("all"); setProfessional("all"); }}>
                 {t("Ver todas as respostas", "See all responses", "Ver todas las respuestas")}
               </Button>
             </div>
@@ -215,6 +238,27 @@ const FeedbackQualityCard = ({ clinicId }: { clinicId: string }) => {
                   </div>
                 ))}
               </section>
+
+              {activeProfessional === "all" && perProfessional.length > 0 && (
+                <section className="space-y-2">
+                  <h4 className="text-sm font-semibold">{t("Por profissional", "By professional", "Por profesional")}</h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead><tr className="text-left text-muted-foreground">
+                        <th className="py-2 pr-3 font-normal">{t("Profissional", "Professional", "Profesional")}</th>
+                        <th className="py-2 pr-3 font-normal">{t("Respostas", "Responses", "Respuestas")}</th>
+                        {FEEDBACK_ITEMS.filter((i) => i.area === "professional").map((i) => <th key={i.key} className="py-2 pr-3 font-normal">{itemLabel(i.key, l)}</th>)}
+                      </tr></thead>
+                      <tbody>{perProfessional.map((p) => <tr key={p.key} className="border-t border-border">
+                        <td className="py-2 pr-3">{professionalOptions.find(([key]) => key === p.key)?.[1]}</td>
+                        <td className="py-2 pr-3 tabular-nums">{p.responses}</td>
+                        {p.items.map((i) => <td key={i.item.key} className="py-2 pr-3 tabular-nums">{i.positivePct === null ? "—" : `${i.positivePct}%`} <span className="text-muted-foreground">(n={i.answered})</span></td>)}
+                      </tr>)}</tbody>
+                    </table>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{t("Percentuais favoráveis por pergunta. Poucas respostas não sustentam um ranking. Respostas sem profissional identificado ficam fora desta comparação.", "Favourable percentages by question. Few responses do not support a ranking. Unassigned responses are excluded from this comparison.", "Porcentajes favorables por pregunta. Pocas respuestas no sustentan un ranking. Las respuestas sin profesional identificado quedan fuera de esta comparación.")}</p>
+                </section>
+              )}
 
               {/* Por serviço */}
               {activeService === "all" && perService.length >= 2 && (
@@ -288,6 +332,7 @@ const FeedbackQualityCard = ({ clinicId }: { clinicId: string }) => {
                         <div className="flex flex-wrap items-center gap-1.5">
                           <Badge variant="outline" className={`text-[10px] font-medium ${SENTIMENT_STYLE[d.sentiment]}`}>{sentimentLabel(d.sentiment, l)}</Badge>
                           <span className="text-[11px] text-muted-foreground">{serviceLabel(d.service, l)} · {new Date(d.created_at).toLocaleDateString("pt-BR")}</span>
+                          {d.clinician_name && <span className="break-words text-xs font-medium text-foreground">{d.clinician_name}</span>}
                         </div>
                         {d.ratings.length > 0 && (
                           <div className="flex flex-wrap gap-1">

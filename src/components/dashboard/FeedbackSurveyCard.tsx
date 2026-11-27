@@ -7,6 +7,8 @@ import {
 import { Copy, Check, MessageSquareHeart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
+import { useFeedbackClinicians } from "@/hooks/useFeedbackClinicians";
+import { feedbackLink } from "@/lib/feedbackClinicians";
 
 const SERVICE_OPTIONS = [
   { value: "all", label: { pt: "Todos os serviços", en: "All services", es: "Todos los servicios" } },
@@ -26,8 +28,12 @@ const FeedbackSurveyCard = ({ clinicId, lang }: FeedbackSurveyCardProps) => {
   const { toast } = useToast();
   const [service, setService] = useState("all");
   const [copied, setCopied] = useState(false);
+  const [member, setMember] = useState("all");
+  const { data: clinicians = [], isLoading, isError } = useFeedbackClinicians(clinicId);
+  const activeMember = clinicians.some((c) => c.member_id === member) ? member : "all";
+  const t = (pt: string, en: string, es: string) => lang === "pt" ? pt : lang === "es" ? es : en;
 
-  const link = `${getPublicOrigin()}/feedback/clinic/${clinicId}${service && service !== "all" ? `?service=${service}` : ""}`;
+  const link = feedbackLink(getPublicOrigin(), clinicId, service, activeMember);
 
   const copy = async () => {
     try {
@@ -57,8 +63,8 @@ const FeedbackSurveyCard = ({ clinicId, lang }: FeedbackSurveyCardProps) => {
             : "Generate a satisfaction survey link to send to patients."}
         </p>
 
-        <Select value={service} onValueChange={setService}>
-          <SelectTrigger className="h-9 text-xs">
+        <Select value={service} onValueChange={(v) => { setService(v); setCopied(false); }}>
+          <SelectTrigger className="h-9 text-xs" aria-label={t("Serviço da pesquisa", "Survey service", "Servicio de la encuesta")}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -70,11 +76,20 @@ const FeedbackSurveyCard = ({ clinicId, lang }: FeedbackSurveyCardProps) => {
           </SelectContent>
         </Select>
 
+        <Select value={activeMember} onValueChange={(v) => { setMember(v); setCopied(false); }} disabled={isLoading || isError}>
+          <SelectTrigger className="h-9 text-xs" aria-label={t("Profissional avaliado", "Professional being rated", "Profesional evaluado")}><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("Sem profissional específico", "No specific professional", "Sin profesional específico")}</SelectItem>
+            {clinicians.map((c) => <SelectItem key={c.member_id} value={c.member_id}>{c.full_name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        {isError && <p className="text-xs text-destructive">{t("Não foi possível carregar a equipe. Recarregue para tentar novamente.", "Could not load the team. Reload to retry.", "No se pudo cargar el equipo. Recargue para reintentar.")}</p>}
+
         <div className="flex gap-2">
-          <code className="flex-1 text-[10px] bg-muted/60 px-3 py-2 rounded-lg text-muted-foreground truncate">
+          <code className="min-w-0 flex-1 text-[10px] bg-muted/60 px-3 py-2 rounded-lg text-muted-foreground truncate">
             {link}
           </code>
-          <Button onClick={copy} variant="outline" size="sm" className="gap-1.5 shrink-0">
+          <Button type="button" onClick={copy} disabled={isLoading || isError} variant="outline" size="sm" className="gap-1.5 shrink-0">
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
             {copied ? (lang === "pt" ? "Copiado" : "Copied") : (lang === "pt" ? "Copiar" : "Copy")}
           </Button>

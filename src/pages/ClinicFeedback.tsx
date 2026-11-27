@@ -60,6 +60,10 @@ const ClinicFeedback = () => {
   const rawService = searchParams.get("service") || "";
   const preService = SERVICE_OPTIONS.some((o) => o.value === rawService) ? rawService : "";
   const preProfessionalId = searchParams.get("professional_id") || "";
+  const memberId = searchParams.get("member_id") || "";
+  const [clinicianName, setClinicianName] = useState<string | null>(null);
+  const [clinicianLoading, setClinicianLoading] = useState(!!memberId);
+  const [submitError, setSubmitError] = useState("");
 
   const [clinic, setClinic] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -87,15 +91,29 @@ const ClinicFeedback = () => {
       });
   }, [clinicId]);
 
+  useEffect(() => {
+    let cancelled = false;
+    if (!clinicId || !memberId) { setClinicianLoading(false); setClinicianName(null); return; }
+    setClinicianLoading(true);
+    void supabase.rpc("get_feedback_clinician_name", { _clinic_id: clinicId, _member_id: memberId }).then(({ data, error }) => {
+      if (cancelled) return;
+      setClinicianName(error ? null : data);
+      setClinicianLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [clinicId, memberId]);
+
   const brandColor = clinic?.brand_color || "hsl(var(--primary))";
 
   const handleSubmit = async () => {
-    if (!clinicId) return;
+    if (!clinicId || submitting || (memberId && !clinicianName)) return;
+    setSubmitError("");
     setSubmitting(true);
-    await supabase.from("clinic_feedback_surveys").insert({
+    const { error } = await supabase.from("clinic_feedback_surveys").insert({
       clinic_id: clinicId,
       service_type: serviceType || "fisioterapia",
-      professional_id: preProfessionalId || null,
+      professional_id: memberId ? null : preProfessionalId || null,
+      clinician_member_id: memberId || null,
       // Anonymous survey: never collect identity.
       patient_name: null,
       patient_email: null,
@@ -104,6 +122,11 @@ const ClinicFeedback = () => {
       clinic_answers: { ...clinicAnswers, observations: clinicObs },
       general_observations: generalObs || null,
     });
+    if (error) {
+      setSubmitting(false);
+      setSubmitError("Não foi possível enviar sua resposta. Seus dados continuam aqui; tente novamente. Se o profissional saiu da equipe, peça um novo link à clínica.");
+      return;
+    }
 
     // Fire-and-forget notification to owner/secretary
     supabase.functions.invoke("notify-feedback", {
@@ -118,7 +141,7 @@ const ClinicFeedback = () => {
     setSubmitted(true);
   };
 
-  if (loading) {
+  if (loading || clinicianLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -133,6 +156,12 @@ const ClinicFeedback = () => {
       </div>
     );
   }
+
+  if (memberId && !clinicianName) return (
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <p className="max-w-md text-center text-muted-foreground">Este profissional não está disponível para esta pesquisa. Peça um novo link à clínica.</p>
+    </div>
+  );
 
   if (submitted) {
     return (
@@ -207,6 +236,7 @@ const ClinicFeedback = () => {
     // Step 3: Professional evaluation
     <div key="pro-eval" className="space-y-5">
       <h3 className="text-lg font-semibold">Avaliação do Profissional</h3>
+      {clinicianName && <p className="break-words text-sm font-medium text-primary">{clinicianName}</p>}
       <RadioQuestion label="Comunicação e clareza" options={QUALITY_OPTIONS} value={proAnswers.communication || ""} onChange={(v) => setProAnswers((p) => ({ ...p, communication: v }))} />
       <RadioQuestion label="Pontualidade" options={PUNCTUALITY_OPTIONS} value={proAnswers.punctuality || ""} onChange={(v) => setProAnswers((p) => ({ ...p, punctuality: v }))} />
       <RadioQuestion label="Acolhimento e empatia" options={QUALITY_OPTIONS} value={proAnswers.empathy || ""} onChange={(v) => setProAnswers((p) => ({ ...p, empathy: v }))} />
@@ -283,6 +313,7 @@ const ClinicFeedback = () => {
       <Card className="w-full max-w-md">
         <CardContent className="py-6">
           {steps[step]}
+          {submitError && <p role="alert" className="mt-4 text-sm text-destructive">{submitError}</p>}
 
           <div className="flex gap-3 mt-6">
             {step > 0 && (

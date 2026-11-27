@@ -1650,6 +1650,8 @@ export type Database = {
         Row: {
           clinic_answers: Json
           clinic_id: string
+          clinician_member_id: string | null
+          clinician_name: string | null
           created_at: string
           general_observations: string | null
           id: string
@@ -1663,6 +1665,8 @@ export type Database = {
         Insert: {
           clinic_answers?: Json
           clinic_id: string
+          clinician_member_id?: string | null
+          clinician_name?: string | null
           created_at?: string
           general_observations?: string | null
           id?: string
@@ -1676,6 +1680,8 @@ export type Database = {
         Update: {
           clinic_answers?: Json
           clinic_id?: string
+          clinician_member_id?: string | null
+          clinician_name?: string | null
           created_at?: string
           general_observations?: string | null
           id?: string
@@ -1692,6 +1698,13 @@ export type Database = {
             columns: ["clinic_id"]
             isOneToOne: false
             referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clinic_feedback_surveys_clinician_member_id_fkey"
+            columns: ["clinician_member_id"]
+            isOneToOne: false
+            referencedRelation: "clinic_members"
             referencedColumns: ["id"]
           },
           {
@@ -6290,6 +6303,17 @@ export type Database = {
         }[]
       }
       get_exercise_program_by_token: { Args: { _token: string }; Returns: Json }
+      get_feedback_clinician_name: {
+        Args: { _clinic_id: string; _member_id: string }
+        Returns: string
+      }
+      get_feedback_clinicians: {
+        Args: { _clinic_id: string }
+        Returns: {
+          full_name: string
+          member_id: string
+        }[]
+      }
       get_hep_clinic_branding: { Args: { _token: string }; Returns: Json }
       get_hep_professional: {
         Args: { _token: string }

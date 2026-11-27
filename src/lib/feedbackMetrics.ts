@@ -13,6 +13,8 @@ export interface FeedbackRow {
   created_at: string;
   service_type: string;
   professional_id?: string | null;
+  clinician_member_id?: string | null;
+  clinician_name?: string | null;
   service_answers?: Record<string, unknown> | null;
   professional_answers?: Record<string, unknown> | null;
   clinic_answers?: Record<string, unknown> | null;
@@ -195,6 +197,7 @@ export const byService = (rows: FeedbackRow[]): ServiceScore[] => {
 
 export interface ResponseDetail {
   id: string;
+  clinician_name?: string | null;
   created_at: string;
   service: string;
   sentiment: Sentiment;
@@ -220,7 +223,7 @@ export const responseDetails = (rows: FeedbackRow[]): ResponseDetail[] =>
     if (general) comments.push({ area: "general", text: general });
     const sentiment = sentimentOf(r);
     return {
-      id: r.id, created_at: r.created_at, service: r.service_type || "fisioterapia", sentiment, ratings, comments,
+      id: r.id, clinician_name: r.clinician_name, created_at: r.created_at, service: r.service_type || "fisioterapia", sentiment, ratings, comments,
       hasLowRating: sentiment === "detractor" || ratings.some((x) => !x.positive),
     };
   });

@@ -4,13 +4,14 @@ import {
 import { answerLabel, areaLabel, commentAreaLabel, itemLabel, sentimentLabel, serviceLabel, type FbLang } from "./feedbackLabels";
 
 const esc = (v: unknown) =>
-  String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+  String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] ?? c));
 
 /** Every question and all four comments, one line per anonymous response. */
 export const feedbackCsv = (rows: FeedbackRow[], l: FbLang): string => {
   const headers = [
     l === "pt" ? "Data" : l === "es" ? "Fecha" : "Date",
     l === "pt" ? "Serviço" : l === "es" ? "Servicio" : "Service",
+    l === "pt" ? "Profissional avaliado" : l === "es" ? "Profesional evaluado" : "Professional being rated",
     l === "pt" ? "Recomendaria" : l === "es" ? "Recomendaría" : "Would recommend",
     ...FEEDBACK_ITEMS.map((i) => itemLabel(i.key, l)),
     commentAreaLabel("service", l), commentAreaLabel("professional", l), commentAreaLabel("clinic", l), commentAreaLabel("general", l),
@@ -21,6 +22,7 @@ export const feedbackCsv = (rows: FeedbackRow[], l: FbLang): string => {
     return [
       new Date(r.created_at).toLocaleDateString("pt-BR"),
       serviceLabel(r.service_type, l),
+      r.clinician_name || "",
       rec ? answerLabel(rec, l) : "",
       ...FEEDBACK_ITEMS.map((i) => { const a = answerOf(r, i); return a ? answerLabel(a, l) : ""; }),
       obs(r.service_answers), obs(r.professional_answers), obs(r.clinic_answers), r.general_observations || "",
@@ -54,7 +56,7 @@ export const printFeedbackReport = (rows: FeedbackRow[], l: FbLang, scopeLabel: 
     ${a.items.map((i) => `<tr><td>${esc(itemLabel(i.item.key, l))}</td><td>${i.positivePct === null ? "—" : `${i.positivePct}%`}</td><td>${i.answered}</td><td>${esc(i.counts.filter((c) => c.count).map((c) => `${answerLabel(c.value, l)}: ${c.count}`).join(" · ") || "—")}</td></tr>`).join("")}
     </tbody></table>`).join("");
   const voices = responseDetails(rows).filter((d) => d.comments.length).map((d) => `
-    <div class="voice"><p class="meta">${esc(new Date(d.created_at).toLocaleDateString("pt-BR"))} · ${esc(serviceLabel(d.service, l))} · ${esc(sentimentLabel(d.sentiment, l))}</p>
+    <div class="voice"><p class="meta">${esc(new Date(d.created_at).toLocaleDateString("pt-BR"))} · ${esc(serviceLabel(d.service, l))} · ${esc(sentimentLabel(d.sentiment, l))}${d.clinician_name ? ` · ${esc(d.clinician_name)}` : ""}</p>
     ${d.comments.map((c) => `<p><b>${esc(commentAreaLabel(c.area, l))}:</b> ${esc(c.text)}</p>`).join("")}</div>`).join("");
 
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(t("Pesquisa de satisfação", "Satisfaction survey", "Encuesta de satisfacción"))}</title>

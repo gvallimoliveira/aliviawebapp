@@ -685,11 +685,11 @@ const ClinicSupport = () => {
                               <AccordionTrigger className="text-left text-base font-medium text-foreground gap-3">
                                 <span className="flex items-center gap-3">
                                   <ItemIcon className="h-4 w-4 text-primary shrink-0" />
-                                  {item.key === "patient_daily_care" || item.key === "evidence_library" ? t(`clinic.support.tool.${item.key}.title`) : item.key === "spine_maigne" || item.key === "insights_funnel" || item.key === "insights_management" || item.key === "studio_cardiorespiratory" || item.key === "studio_ecosystem" ? t(`support.pro.tool.${item.key}.title`) : item.title}
+                                  {item.key === "patient_daily_care" || item.key === "evidence_library" || item.key === "nps_survey" ? t(`clinic.support.tool.${item.key}.title`) : item.key === "spine_maigne" || item.key === "insights_funnel" || item.key === "insights_management" || item.key === "studio_cardiorespiratory" || item.key === "studio_ecosystem" ? t(`support.pro.tool.${item.key}.title`) : item.title}
                                 </span>
                               </AccordionTrigger>
                               <AccordionContent className="text-muted-foreground leading-relaxed pl-7">
-                                {item.key === "patient_daily_care" || item.key === "evidence_library" ? t(`clinic.support.tool.${item.key}.desc`) : item.key === "spine_maigne" || item.key === "insights_funnel" || item.key === "insights_management" || item.key === "studio_cardiorespiratory" || item.key === "studio_ecosystem" ? t(`support.pro.tool.${item.key}.desc`) : item.desc}
+                                {item.key === "patient_daily_care" || item.key === "evidence_library" || item.key === "nps_survey" ? t(`clinic.support.tool.${item.key}.desc`) : item.key === "spine_maigne" || item.key === "insights_funnel" || item.key === "insights_management" || item.key === "studio_cardiorespiratory" || item.key === "studio_ecosystem" ? t(`support.pro.tool.${item.key}.desc`) : item.desc}
                               </AccordionContent>
                             </AccordionItem>
                           );
@@ -728,7 +728,7 @@ const ClinicSupport = () => {
                   {i === 0 ? t("support.pro.faq.profile_isolation.q") : faq.q === "Como emito um relatório fisioterapêutico livre (convênio, médico, encaminhamento)?" ? t("support.pro.tool.free_report.title") : faq.q}
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground leading-relaxed">
-                  {i === 0 ? t("support.pro.faq.profile_isolation.a") : faq.q === "Como emito um relatório fisioterapêutico livre (convênio, médico, encaminhamento)?" ? <>{t("support.pro.tool.free_report.desc")}<p className="mt-3">{t("support.pro.tool.report_identity.desc")}</p></> : faq.a}
+                  {i === 0 ? t("support.pro.faq.profile_isolation.a") : faq.q === "Como funciona a pesquisa de satisfação (NPS)?" ? t("clinic.support.tool.nps_survey.desc") : faq.q === "Como emito um relatório fisioterapêutico livre (convênio, médico, encaminhamento)?" ? <>{t("support.pro.tool.free_report.desc")}<p className="mt-3">{t("support.pro.tool.report_identity.desc")}</p></> : faq.a}
                 </AccordionContent>
               </AccordionItem>
             ))}
