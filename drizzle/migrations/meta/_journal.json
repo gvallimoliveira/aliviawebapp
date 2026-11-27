@@ -631,6 +631,13 @@
       "when": 1795800586193,
       "tag": "0089_feedback_clinical_member_attribution",
       "breakpoints": true
+    },
+    {
+      "idx": 90,
+      "version": "7",
+      "when": 1795812571739,
+      "tag": "0090_clinic_member_agenda_scope",
+      "breakpoints": true
     }
   ]
 }

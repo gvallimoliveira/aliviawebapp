@@ -1,4 +1,5 @@
 import { toMinutes, endTimeFrom, assignLanes, cardPixelHeight, slotRowHeight, crowdedSlotPosition, serviceFilterKey, CUSTOM_SERVICE_TYPE } from "@/lib/appointmentTime";
+import { agendaScopeSummary, normalizeAgendaScope, type AgendaScope } from "@/lib/agendaVisibility";
 import { createLatestRequestGate } from "@/lib/latestRequest";
 import { expandRecurrence, planRecurrenceDates, type SlotOccupant } from "@/lib/appointmentRecurrence";
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -357,6 +358,18 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   const [searchParams, setSearchParams] = useSearchParams();
   // Clinic grid governance: only owner/admin/secretary create, move or delete slots.
   const canEditGrid = isSimulated || !clinicId || canManageClinic;
+  // What this member may see is enforced by the database; this only explains the reduced view.
+  const [agendaAccess, setAgendaAccess] = useState<{ scope: AgendaScope; services: string[] } | null>(null);
+  useEffect(() => {
+    if (!clinicId || isSimulated || !user?.id || canManageClinic) { setAgendaAccess(null); return; }
+    let alive = true;
+    (async () => {
+      const { data } = await (supabase.from("clinic_members") as any)
+        .select("agenda_scope, agenda_services").eq("clinic_id", clinicId).eq("user_id", user.id).maybeSingle();
+      if (alive) setAgendaAccess(data ? { scope: normalizeAgendaScope(data.agenda_scope), services: Array.isArray(data.agenda_services) ? data.agenda_services : [] } : null);
+    })();
+    return () => { alive = false; };
+  }, [clinicId, isSimulated, user?.id, canManageClinic]);
 
   useEffect(() => {
     if (!clinicId || isSimulated) {
@@ -1167,6 +1180,13 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         </div>
       </div>
 
+      {agendaAccess && agendaAccess.scope !== "clinic" && (
+        <p className="text-[11px] text-muted-foreground rounded-md border border-border/60 bg-muted/30 px-2.5 py-1.5" data-testid="agenda-access-notice">
+          {(language === "en" ? "Your view of this schedule: " : language === "es" ? "Su vista de esta agenda: " : "Sua visão desta agenda: ")
+            + agendaScopeSummary(agendaAccess.scope, agendaAccess.services, (language === "en" || language === "es" ? language : "pt"), customServices)
+            + (language === "en" ? ". Set by the clinic management." : language === "es" ? ". Definida por la gestión de la clínica." : ". Definida pela gestão da clínica.")}
+        </p>
+      )}
       {/* Service filter (multi-select) */}
       <div className="flex items-center gap-2 flex-wrap">
         <button

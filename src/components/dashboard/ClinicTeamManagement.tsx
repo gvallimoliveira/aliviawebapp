@@ -11,12 +11,15 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Users, UserPlus, Mail, Trash2, Crown, Shield, Stethoscope as StethIcon, ClipboardList, GraduationCap, Copy, MessageCircle, Pencil } from "lucide-react";
+import { Users, UserPlus, Mail, Trash2, Crown, Shield, Stethoscope as StethIcon, ClipboardList, GraduationCap, Copy, MessageCircle, Pencil, CalendarDays } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ClinicReportIdentityForm, type ClinicReportMember } from "@/components/account/ClinicReportIdentity";
 import ClinicSettingsCard from "./ClinicSettingsCard";
 import { buildInviteLink, inviteMessage } from "@/lib/clinicInvite";
 import type { Database } from "@/integrations/supabase/types";
+import AgendaAccessDialog from "./AgendaAccessDialog";
+import { agendaScopeSummary, isAgendaManagerRole, normalizeAgendaScope, type AgendaScope } from "@/lib/agendaVisibility";
+import { CUSTOM_SERVICE_TYPE } from "@/lib/appointmentTime";
 
 type ClinicRole = Database["public"]["Enums"]["clinic_role"];
 
@@ -73,6 +76,9 @@ const ClinicTeamManagement = ({ focusTarget }: { focusTarget?: "identity" | "tea
   const [sending, setSending] = useState(false);
   const [identities, setIdentities] = useState<ClinicReportMember[]>([]);
   const [editing, setEditing] = useState<ClinicReportMember | null>(null);
+  const [agendaAccess, setAgendaAccess] = useState<Record<string, { scope: AgendaScope; services: string[] }>>({});
+  const [customServices, setCustomServices] = useState<{ id: string; name: string }[]>([]);
+  const [agendaMember, setAgendaMember] = useState<Member | null>(null);
 
   const canManage = canManageClinic;
   const lang = language as "pt" | "en" | "es";
@@ -101,6 +107,18 @@ const ClinicTeamManagement = ({ focusTarget }: { focusTarget?: "identity" | "tea
       .select("id, email, role, expires_at")
       .eq("clinic_id", activeClinic.clinic_id);
     setInvitations(invs || []);
+
+    const { data: access } = await (supabase.from("clinic_members") as any)
+      .select("id, agenda_scope, agenda_services")
+      .eq("clinic_id", activeClinic.clinic_id);
+    const map: Record<string, { scope: AgendaScope; services: string[] }> = {};
+    for (const row of (access as any[]) || []) {
+      map[row.id] = { scope: normalizeAgendaScope(row.agenda_scope), services: Array.isArray(row.agenda_services) ? row.agenda_services : [] };
+    }
+    setAgendaAccess(map);
+    const { data: svcs } = await (supabase.from("care_services" as any) as any)
+      .select("id, name").eq("clinic_id", activeClinic.clinic_id).eq("active", true).eq("service_type", CUSTOM_SERVICE_TYPE).order("name");
+    setCustomServices(Array.isArray(svcs) ? svcs : []);
   };
 
   useEffect(() => { fetchTeam(); }, [activeClinic?.clinic_id]);
@@ -175,6 +193,7 @@ const ClinicTeamManagement = ({ focusTarget }: { focusTarget?: "identity" | "tea
 
   if (!activeClinic) return null;
 
+  const canSetAgendaAccess = activeClinic.role === "owner" || activeClinic.role === "admin";
   const isUnlimited = activeClinic.max_members >= 9999;
   const isSec = (r: ClinicRole) => r === "secretary";
   const secretarySeats = members.filter((m) => isSec(m.role)).length + invitations.filter((i) => isSec(i.role)).length;
@@ -203,8 +222,8 @@ const ClinicTeamManagement = ({ focusTarget }: { focusTarget?: "identity" | "tea
         </CardHeader>
         <CardContent className="space-y-3">
           {members.map((m) => (
-            <div key={m.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border/50 bg-muted/30">
-              <div className="flex items-center gap-3 min-w-0">
+            <div key={m.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 p-3 rounded-lg border border-border/50 bg-muted/30">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
                 {m.is_student ? <GraduationCap className="h-3.5 w-3.5 text-primary" /> : roleIcon(m.role)}
                 <div className="min-w-0">
                   <p className="text-sm font-medium truncate">{identities.find(i => i.id === m.id)?.full_name || m.full_name || m.email || "—"}</p>
@@ -261,6 +280,21 @@ const ClinicTeamManagement = ({ focusTarget }: { focusTarget?: "identity" | "tea
                   </Button>
                 </div>
               )}
+              <div className="basis-full empty:hidden min-w-0">
+                    {canManage && !isAgendaManagerRole(m.role) && (() => {
+                      const acc = agendaAccess[m.id] ?? { scope: "clinic" as AgendaScope, services: [] };
+                      const label = `${lang === "pt" ? "Agenda" : lang === "es" ? "Agenda" : "Schedule"}: ${agendaScopeSummary(acc.scope, acc.services, lang, customServices)}`;
+                      return canSetAgendaAccess ? (
+                        <button type="button" onClick={() => setAgendaMember(m)}
+                          aria-label={lang === "pt" ? `Definir acesso à agenda de ${m.full_name || m.email || "integrante"}` : `Set agenda access for ${m.full_name || m.email || "member"}`}
+                          className="inline-flex max-w-full items-center gap-1 rounded-full border border-primary/40 px-2 py-0.5 text-[10px] font-medium text-primary hover:bg-primary/10">
+                          <CalendarDays className="h-3 w-3 shrink-0" /><span className="truncate">{label}</span><Pencil className="h-2.5 w-2.5 shrink-0" />
+                        </button>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] max-w-full"><span className="truncate">{label}</span></Badge>
+                      );
+                    })()}
+              </div>
             </div>
           ))}
         </CardContent>
@@ -384,6 +418,19 @@ const ClinicTeamManagement = ({ focusTarget }: { focusTarget?: "identity" | "tea
         </Card>
       )}
       <Dialog open={!!editing} onOpenChange={o => { if (!o) setEditing(null); }}><DialogContent><DialogHeader><DialogTitle>{lang === "pt" ? "Identificação nos relatórios" : lang === "es" ? "Identificación en informes" : "Report identity"}</DialogTitle></DialogHeader>{editing && <ClinicReportIdentityForm key={editing.id} member={editing} onSaved={() => { setEditing(null); fetchTeam(); }} />}</DialogContent></Dialog>
+      {agendaMember && (
+        <AgendaAccessDialog
+          open={!!agendaMember}
+          onOpenChange={(o) => { if (!o) setAgendaMember(null); }}
+          memberId={agendaMember.id}
+          memberName={agendaMember.full_name || agendaMember.email || "—"}
+          scope={agendaAccess[agendaMember.id]?.scope ?? "clinic"}
+          services={agendaAccess[agendaMember.id]?.services ?? []}
+          customServices={customServices}
+          lang={lang}
+          onSaved={fetchTeam}
+        />
+      )}
     </div>
   );
 };

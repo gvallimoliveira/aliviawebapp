@@ -1,5 +1,9 @@
 # Roadmap
 
+## Acesso à agenda por integrante da clínica
+- [x] Dono/admin define em Clínica → Equipe o alcance de cada integrante clínico: só a própria, serviços que opera (múltiplos) ou clínica toda; regra aplicada no servidor, aviso na Agenda do integrante, ajuda da clínica atualizada.
+- [ ] Pendente de decisão: o mesmo recorte para prontuários/lista de pacientes e para evoluções (hoje a equipe clínica lê as da clínica toda).
+
 ## Pesquisa de satisfação — resultados para o gestor
 - [x] Resultados movidos para Insights → Equipe & Qualidade com NPS (promotores/neutros/detratores), nota por pergunta nas três dimensões, pontos de atenção, comparação por serviço, evolução mensal e respostas individuais com comentários completos; planilha e relatório com todas as perguntas.
 - [x] Seleção de integrante clínico ativo da equipe no link, excluindo secretaria/administração; vínculo validado na clínica sem PRO pessoal, nome do avaliado e filtro em resultados/planilha/relatório. Respostas antigas preservadas sem atribuição inventada.

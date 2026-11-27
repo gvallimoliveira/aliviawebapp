@@ -1791,6 +1791,8 @@ export type Database = {
       clinic_members: {
         Row: {
           accepted_at: string | null
+          agenda_scope: string
+          agenda_services: string[]
           clinic_id: string
           council_number: string | null
           council_type: string | null
@@ -1805,6 +1807,8 @@ export type Database = {
         }
         Insert: {
           accepted_at?: string | null
+          agenda_scope?: string
+          agenda_services?: string[]
           clinic_id: string
           council_number?: string | null
           council_type?: string | null
@@ -1819,6 +1823,8 @@ export type Database = {
         }
         Update: {
           accepted_at?: string | null
+          agenda_scope?: string
+          agenda_services?: string[]
           clinic_id?: string
           council_number?: string | null
           council_type?: string | null
@@ -5957,6 +5963,16 @@ export type Database = {
         Returns: boolean
       }
       can_use_post_op_beta: { Args: never; Returns: boolean }
+      can_view_clinic_appointment: {
+        Args: {
+          _clinic_id: string
+          _professional_id: string
+          _service_id: string
+          _service_type: string
+          _user_id: string
+        }
+        Returns: boolean
+      }
       claim_studio_brand_invites: { Args: never; Returns: number }
       clear_assessment_progress: {
         Args: { _scope_key: string }
