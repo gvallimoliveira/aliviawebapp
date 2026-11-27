@@ -1,4 +1,5 @@
 # Architecture decisions
+- Before any plan/edit, apply mem://process/execution-checklist; skipped checks caused rework.
 - Professional landing mounts its below-fold content together and uses static statements/native horizontal scrolling; content must not depend on scroll-driven opacity or reserved lazy placeholders, to keep fast mobile scrolling readable.
 - Theme uses one next-themes class provider and a browser-local preference with light default; account toggle never changes auth or clinical data.
 - Patient load opt-in uses scoped `set_patient_load_monitoring` and a lazy record gate; keep existing users enabled, never tie visibility to plan status or delete history/links when hiding.
