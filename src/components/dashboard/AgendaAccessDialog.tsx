@@ -22,7 +22,7 @@ interface Props {
 
 const tx = (lang: Lang, pt: string, en: string, es: string) => (lang === "en" ? en : lang === "es" ? es : pt);
 
-/** Owner/admin sets what a clinical team member sees in the clinic Agenda. */
+/** Owner/admin/secretary sets what a clinical team member sees in the clinic Agenda. */
 const AgendaAccessDialog = ({ open, onOpenChange, memberId, memberName, scope, services, customServices, lang, onSaved }: Props) => {
   const [draftScope, setDraftScope] = useState<AgendaScope>(scope);
   const [draftServices, setDraftServices] = useState<string[]>(services);
@@ -56,7 +56,7 @@ const AgendaAccessDialog = ({ open, onOpenChange, memberId, memberName, scope, s
     setSaving(false);
     if (error || !data?.length) {
       toast({ title: tx(lang, "Não foi possível salvar o acesso à agenda", "Could not save agenda access", "No se pudo guardar el acceso a la agenda"),
-        description: tx(lang, "Somente proprietário ou administrador pode alterar.", "Only the owner or an admin can change it.", "Solo el propietario o administrador puede cambiarlo."), variant: "destructive" });
+        description: tx(lang, "Somente proprietário, administrador ou secretária pode alterar.", "Only the owner, an admin or the secretary can change it.", "Solo el propietario, administrador o secretaria puede cambiarlo."), variant: "destructive" });
       return;
     }
     toast({ title: tx(lang, "Acesso à agenda atualizado", "Agenda access updated", "Acceso a la agenda actualizado") });

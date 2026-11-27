@@ -638,6 +638,13 @@
       "when": 1795812571739,
       "tag": "0090_clinic_member_agenda_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 91,
+      "version": "7",
+      "when": 1795813228360,
+      "tag": "0091_secretary_can_set_agenda_scope",
+      "breakpoints": true
     }
   ]
 }

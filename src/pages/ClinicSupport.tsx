@@ -260,7 +260,7 @@ const categories: ToolCategory[] = [
         key: "shared_agenda",
         icon: Calendar,
         title: "Agenda compartilhada multi-profissional",
-        desc: "Proprietário, administrador e secretária veem a agenda completa. Para os demais integrantes, o proprietário ou administrador define em Clínica → Equipe, no selo \"Agenda\" de cada pessoa: só a própria agenda, a agenda dos serviços que opera (um ou mais, ex.: Pilates e Fisioterapia) ou a clínica toda. Cada um sempre vê os próprios atendimentos. Integrantes já cadastrados permanecem com a clínica toda até a mudança. A regra vale para a Agenda e não altera o acesso a prontuários.",
+        desc: "Proprietário, administrador e secretária veem a agenda completa. Para os demais integrantes, o proprietário, o administrador ou a secretária define em Clínica → Equipe, no selo \"Agenda\" de cada pessoa: só a própria agenda, a agenda dos serviços que opera (um ou mais, ex.: Pilates e Fisioterapia) ou a clínica toda. Cada um sempre vê os próprios atendimentos. Integrantes já cadastrados permanecem com a clínica toda até a mudança. A regra vale para a Agenda e não altera o acesso a prontuários.",
       },
       {
         key: "drag_drop",

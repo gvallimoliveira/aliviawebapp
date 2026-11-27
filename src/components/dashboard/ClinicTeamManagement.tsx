@@ -193,7 +193,7 @@ const ClinicTeamManagement = ({ focusTarget }: { focusTarget?: "identity" | "tea
 
   if (!activeClinic) return null;
 
-  const canSetAgendaAccess = activeClinic.role === "owner" || activeClinic.role === "admin";
+  const canSetAgendaAccess = isAgendaManagerRole(activeClinic.role);
   const isUnlimited = activeClinic.max_members >= 9999;
   const isSec = (r: ClinicRole) => r === "secretary";
   const secretarySeats = members.filter((m) => isSec(m.role)).length + invitations.filter((i) => isSec(i.role)).length;
