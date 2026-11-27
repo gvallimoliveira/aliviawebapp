@@ -645,6 +645,13 @@
       "when": 1795813228360,
       "tag": "0091_secretary_can_set_agenda_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 92,
+      "version": "7",
+      "when": 1795813682279,
+      "tag": "0092_secretary_cannot_touch_owner_admin_roles",
+      "breakpoints": true
     }
   ]
 }

@@ -18,6 +18,7 @@ import ClinicSettingsCard from "./ClinicSettingsCard";
 import { buildInviteLink, inviteMessage } from "@/lib/clinicInvite";
 import type { Database } from "@/integrations/supabase/types";
 import AgendaAccessDialog from "./AgendaAccessDialog";
+import { canAssignClinicRole, canManageClinicMember } from "@/lib/clinicTeamPermissions";
 import { agendaScopeSummary, isAgendaManagerRole, normalizeAgendaScope, type AgendaScope } from "@/lib/agendaVisibility";
 import { CUSTOM_SERVICE_TYPE } from "@/lib/appointmentTime";
 
@@ -256,15 +257,15 @@ const ClinicTeamManagement = ({ focusTarget }: { focusTarget?: "identity" | "tea
               {(m.user_id === user?.id || activeClinic.role === "owner" || activeClinic.role === "admin") && (
                 <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" title={lang === "pt" ? "Editar identificação nos relatórios" : lang === "es" ? "Editar identificación en informes" : "Edit report identity"} aria-label={lang === "pt" ? `Editar dados de ${m.full_name || m.email}` : `Edit details for ${m.full_name || m.email}`} onClick={() => setEditing(identities.find(i => i.id === m.id) || { id: m.id, user_id: m.user_id, full_name: m.full_name, council_type: null, council_number: null })}><Pencil className="h-4 w-4" /></Button>
               )}
-              {canManage && m.user_id !== user?.id && (
+              {canManage && m.user_id !== user?.id && canManageClinicMember(activeClinic.role, m.role) && (
                 <div className="flex items-center gap-2 shrink-0">
                   <Select value={m.role} onValueChange={(v) => handleRoleChange(m.id, v as ClinicRole)}>
                     <SelectTrigger className="w-[140px] h-8 text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="owner">{roleLabels.owner[lang]}</SelectItem>
-                      <SelectItem value="admin">{roleLabels.admin[lang]}</SelectItem>
+                      {canAssignClinicRole(activeClinic.role, "owner") && <SelectItem value="owner">{roleLabels.owner[lang]}</SelectItem>}
+                      {canAssignClinicRole(activeClinic.role, "admin") && <SelectItem value="admin">{roleLabels.admin[lang]}</SelectItem>}
                       <SelectItem value="therapist">{roleLabels.therapist[lang]}</SelectItem>
                       <SelectItem value="intern">{roleLabels.intern[lang]}</SelectItem>
                       <SelectItem value="secretary">{roleLabels.secretary[lang]}</SelectItem>
@@ -316,7 +317,7 @@ const ClinicTeamManagement = ({ focusTarget }: { focusTarget?: "identity" | "tea
                   <p className="text-sm font-medium truncate">{inv.email}</p>
                   <p className="text-xs text-muted-foreground">{roleLabels[inv.role][lang]}</p>
                 </div>
-                {canManage && (
+                {canManage && canManageClinicMember(activeClinic.role, inv.role) && (
                   <div className="flex flex-wrap items-center gap-1">
                     <Button type="button" variant="outline" size="sm" className="text-xs h-8" onClick={() => shareInvite(inv, "copy")}>
                       <Copy className="h-3.5 w-3.5 mr-1" />
@@ -379,7 +380,7 @@ const ClinicTeamManagement = ({ focusTarget }: { focusTarget?: "identity" | "tea
                    <SelectValue />
                  </SelectTrigger>
                   <SelectContent>
-                    {(["owner","admin","therapist","intern","secretary","osteopath","pilates_instructor","doctor","rpg_specialist","massage_therapist"] as ClinicRole[]).map((r) => (
+                    {(["owner","admin","therapist","intern","secretary","osteopath","pilates_instructor","doctor","rpg_specialist","massage_therapist"] as ClinicRole[]).filter((r) => canAssignClinicRole(activeClinic.role, r)).map((r) => (
                       <SelectItem key={r} value={r} disabled={isSec(r) ? secretaryFull : clinicalFull}>
                         {roleLabels[r][lang]}
                       </SelectItem>

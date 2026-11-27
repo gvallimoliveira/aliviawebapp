@@ -272,7 +272,7 @@ const categories: ToolCategory[] = [
         key: "team_roles",
         icon: Users,
         title: "Equipe com permissões (RBAC)",
-        desc: "Convide fisioterapeutas e secretárias por e-mail e envie o link direto de cadastro (Copiar link ou WhatsApp, válido por 7 dias) em Convites pendentes. Cada papel vê apenas o que precisa: secretária gerencia agenda; terapeuta vê seus pacientes; dono vê tudo.",
+        desc: "Convide fisioterapeutas e secretárias por e-mail e envie o link direto de cadastro (Copiar link ou WhatsApp, válido por 7 dias) em Convites pendentes. Cada papel vê apenas o que precisa: secretária gerencia agenda; terapeuta vê seus pacientes; dono vê tudo. A secretária pode adicionar, ajustar e remover integrantes da equipe, mas apenas proprietário e administrador concedem, alteram ou removem os papéis de proprietário e administrador.",
       },
       {
         key: "service_types",
