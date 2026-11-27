@@ -9,28 +9,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import InsightCardShell from "./InsightCardShell";
+import FeedbackResponsesDialog, { ResponseFilterChips, ResponseRow } from "./FeedbackResponsesDialog";
 import {
   ATTENTION_THRESHOLD_PCT, MIN_ANSWERS_FOR_ALERT, FEEDBACK_ITEMS, areaScores, attentionPoints, byService, filterByPeriod,
-  monthlyTrend, npsSummary, responseDetails, type FeedbackRow, type ItemScore, type Sentiment,
+  monthlyTrend, npsSummary, responseDetails, filterResponses, RESPONSE_PREVIEW, type FeedbackRow, type ItemScore, type ResponseFilter,
 } from "@/lib/feedbackMetrics";
-import { answerLabel, areaLabel, commentAreaLabel, itemLabel, sentimentLabel, serviceLabel, type FbLang } from "@/lib/feedbackLabels";
+import { answerLabel, areaLabel, itemLabel, sentimentLabel, serviceLabel, type FbLang } from "@/lib/feedbackLabels";
 import { downloadFeedbackCsv, printFeedbackReport } from "@/lib/feedbackExport";
 import { useFeedbackClinicians } from "@/hooks/useFeedbackClinicians";
 import { feedbackByClinician, feedbackClinicianKey, filterFeedbackClinician } from "@/lib/feedbackClinicians";
 
 type Period = "30" | "90" | "365" | "all";
-type VoiceFilter = "all" | "comments" | "low";
-const PAGE = 8;
 const SMALL_SAMPLE = 10;
 
 /** Best → worst segments of an answer scale. */
 const SEGMENT = ["bg-emerald-500", "bg-emerald-300", "bg-amber-400", "bg-red-500"];
-const SENTIMENT_STYLE: Record<Sentiment, string> = {
-  promoter: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  passive: "bg-amber-100 text-amber-800 border-amber-200",
-  detractor: "bg-red-100 text-red-800 border-red-200",
-  unknown: "bg-muted text-muted-foreground border-border",
-};
 const pctTone = (p: number | null) => (p === null ? "text-muted-foreground" : p >= 85 ? "text-emerald-700" : p >= 70 ? "text-amber-700" : "text-red-700");
 
 const ItemRow = ({ s, l }: { s: ItemScore; l: FbLang }) => (
@@ -58,8 +51,9 @@ const FeedbackQualityCard = ({ clinicId }: { clinicId: string }) => {
   const { toast } = useToast();
   const [period, setPeriod] = useState<Period>("365");
   const [service, setService] = useState("all");
-  const [voice, setVoice] = useState<VoiceFilter>("all");
-  const [shown, setShown] = useState(PAGE);
+  const [voice, setVoice] = useState<ResponseFilter>("all");
+  const [responsesOpen, setResponsesOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [professional, setProfessional] = useState("all");
   const { data: clinicians = [] } = useFeedbackClinicians(clinicId);
 
@@ -101,12 +95,12 @@ const FeedbackQualityCard = ({ clinicId }: { clinicId: string }) => {
   const perService = useMemo(() => byService(filterByPeriod(professionalRows, days)), [professionalRows, days]);
   const details = useMemo(() => responseDetails(rows), [rows]);
   const perProfessional = useMemo(() => feedbackByClinician(rows), [rows]);
-  const voices = details.filter((d) => (voice === "comments" ? d.comments.length > 0 : voice === "low" ? d.hasLowRating : true));
+  const voices = useMemo(() => filterResponses(details, voice), [details, voice]);
 
   const delta = prev && nps.nps !== null && prev.nps !== null && nps.answered >= MIN_ANSWERS_FOR_ALERT && prev.answered >= MIN_ANSWERS_FOR_ALERT ? nps.nps - prev.nps : null;
   const periodLabel = { "30": t("Últimos 30 dias", "Last 30 days", "Últimos 30 días"), "90": t("Últimos 90 dias", "Last 90 days", "Últimos 90 días"), "365": t("Últimos 12 meses", "Last 12 months", "Últimos 12 meses"), all: t("Todo o período", "All time", "Todo el período") };
   const scopeLabel = `${periodLabel[period]} · ${activeService === "all" ? t("Todos os serviços", "All services", "Todos los servicios") : serviceLabel(activeService, l)} · ${activeProfessional === "all" ? t("Todos os profissionais", "All professionals", "Todos los profesionales") : professionalOptions.find(([key]) => key === activeProfessional)?.[1]}`;
-  const pick = (v: VoiceFilter) => { setVoice(v); setShown(PAGE); };
+  const openResponses = (id: string | null) => { setSelectedId(id); setResponsesOpen(true); };
 
   const info = (
     <div className="space-y-2 text-xs text-muted-foreground leading-relaxed">
@@ -136,20 +130,20 @@ const FeedbackQualityCard = ({ clinicId }: { clinicId: string }) => {
       ) : (
         <div className="space-y-5">
           <div className="flex flex-wrap items-center gap-2">
-            <Select value={period} onValueChange={(v) => { setPeriod(v as Period); setShown(PAGE); }}>
+            <Select value={period} onValueChange={(v) => setPeriod(v as Period)}>
               <SelectTrigger className="h-8 w-[170px] text-xs" aria-label={t("Período", "Period", "Período")}><SelectValue /></SelectTrigger>
               <SelectContent>
                 {(Object.keys(periodLabel) as Period[]).map((p) => <SelectItem key={p} value={p} className="text-xs">{periodLabel[p]}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Select value={activeService} onValueChange={(v) => { setService(v); setShown(PAGE); }}>
+            <Select value={activeService} onValueChange={(v) => setService(v)}>
               <SelectTrigger className="h-8 w-[170px] text-xs" aria-label={t("Serviço", "Service", "Servicio")}><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all" className="text-xs">{t("Todos os serviços", "All services", "Todos los servicios")}</SelectItem>
                 {services.map((s) => <SelectItem key={s} value={s} className="text-xs">{serviceLabel(s, l)}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Select value={activeProfessional} onValueChange={(v) => { setProfessional(v); setShown(PAGE); }}>
+            <Select value={activeProfessional} onValueChange={(v) => setProfessional(v)}>
               <SelectTrigger className="h-8 w-[220px] text-xs" aria-label={t("Filtrar profissional", "Filter professional", "Filtrar profesional")}><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("Todos os profissionais", "All professionals", "Todos los profesionales")}</SelectItem>
@@ -310,55 +304,30 @@ const FeedbackQualityCard = ({ clinicId }: { clinicId: string }) => {
                 </section>
               )}
 
-              {/* Voz do paciente */}
+              {/* Respostas individuais: resumo curto; a avaliação completa abre sob demanda */}
               <section className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
                   <h4 className="flex items-center gap-1.5 text-sm font-semibold text-foreground"><MessageSquareQuote className="h-4 w-4 text-primary" />{t("Respostas individuais", "Individual responses", "Respuestas individuales")}</h4>
-                  <div className="flex flex-wrap gap-1.5">
-                    {([["all", t("Todas", "All", "Todas"), details.length], ["comments", t("Com comentário", "With comment", "Con comentario"), details.filter((d) => d.comments.length).length], ["low", t("Com nota baixa", "With a low rating", "Con nota baja"), details.filter((d) => d.hasLowRating).length]] as const).map(([k, label, n]) => (
-                      <button key={k} type="button" aria-pressed={voice === k} onClick={() => pick(k)}
-                        className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${voice === k ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground hover:text-foreground"}`}>
-                        {label} ({n})
-                      </button>
-                    ))}
-                  </div>
+                  <ResponseFilterChips details={details} value={voice} onChange={setVoice} l={l} />
                 </div>
                 {voices.length === 0 ? (
                   <p className="text-xs text-muted-foreground">{t("Nenhuma resposta neste filtro.", "No responses for this filter.", "Ninguna respuesta en este filtro.")}</p>
                 ) : (
-                  <ul className="space-y-2">
-                    {voices.slice(0, shown).map((d) => (
-                      <li key={d.id} className="space-y-2 rounded-xl border border-border p-3" data-testid="feedback-response">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <Badge variant="outline" className={`text-[10px] font-medium ${SENTIMENT_STYLE[d.sentiment]}`}>{sentimentLabel(d.sentiment, l)}</Badge>
-                          <span className="text-[11px] text-muted-foreground">{serviceLabel(d.service, l)} · {new Date(d.created_at).toLocaleDateString("pt-BR")}</span>
-                          {d.clinician_name && <span className="break-words text-xs font-medium text-foreground">{d.clinician_name}</span>}
-                        </div>
-                        {d.ratings.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
-                            {d.ratings.map((r) => (
-                              <span key={r.item.key} className={`rounded-md border px-1.5 py-0.5 text-[10px] ${r.positive ? "border-border text-muted-foreground" : "border-red-200 bg-red-50 text-red-800 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-200"}`}>
-                                {itemLabel(r.item.key, l)}: <span className="font-medium">{answerLabel(r.value, l)}</span>
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                        {d.comments.map((c) => (
-                          <div key={c.area}>
-                            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{commentAreaLabel(c.area, l)}</p>
-                            <p className="whitespace-pre-wrap break-words text-sm text-foreground">{c.text}</p>
-                          </div>
-                        ))}
-                      </li>
-                    ))}
-                  </ul>
+                  <>
+                    <p className="text-[11px] text-muted-foreground">{t("Toque em uma avaliação para ver todas as notas e comentários dela.", "Tap a response to see all of its ratings and comments.", "Toque una evaluación para ver todas sus notas y comentarios.")}</p>
+                    <ul className="space-y-1.5">
+                      {voices.slice(0, RESPONSE_PREVIEW).map((d) => <ResponseRow key={d.id} d={d} l={l} onOpen={() => openResponses(d.id)} />)}
+                    </ul>
+                  </>
                 )}
-                {voices.length > shown && (
-                  <Button type="button" variant="outline" size="sm" className="h-8 text-xs" onClick={() => setShown((n) => n + PAGE)}>
-                    {t("Mostrar mais", "Show more", "Mostrar más")} ({voices.length - shown})
+                {voices.length > RESPONSE_PREVIEW && (
+                  <Button type="button" variant="outline" size="sm" className="h-8 text-xs" onClick={() => openResponses(null)}>
+                    {t("Ver todas as respostas", "See all responses", "Ver todas las respuestas")} ({voices.length})
                   </Button>
                 )}
               </section>
+              <FeedbackResponsesDialog open={responsesOpen} onOpenChange={setResponsesOpen} details={details} filter={voice} onFilterChange={setVoice}
+                selectedId={selectedId} onSelect={setSelectedId} scopeLabel={scopeLabel} l={l} />
             </>
           )}
         </div>

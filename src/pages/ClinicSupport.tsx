@@ -296,7 +296,7 @@ const categories: ToolCategory[] = [
         key: "nps_survey",
         icon: Smile,
         title: "Pesquisa de satisfação (NPS) por link",
-        desc: "Envie um link público de pesquisa de satisfação para o paciente após o atendimento. As respostas aparecem em Insights → Equipe & Qualidade: NPS, notas de cada pergunta (tratamento, profissional e clínica), pontos de atenção e os comentários completos, com filtro por período e serviço.",
+        desc: "Envie um link público de pesquisa de satisfação para o paciente após o atendimento. As respostas aparecem em Insights → Equipe & Qualidade: NPS, notas de cada pergunta (tratamento, profissional e clínica), pontos de atenção e lista curta de respostas — toque em uma avaliação para abrir as notas e comentários completos dela —, com filtro por período e serviço.",
       },
     ],
   },

@@ -227,3 +227,12 @@ export const responseDetails = (rows: FeedbackRow[]): ResponseDetail[] =>
       hasLowRating: sentiment === "detractor" || ratings.some((x) => !x.positive),
     };
   });
+
+export type ResponseFilter = "all" | "comments" | "low";
+
+/** Rows the Insights card lists before the manager asks for the full list. */
+export const RESPONSE_PREVIEW = 5;
+
+/** Narrows the individual responses without changing their order. */
+export const filterResponses = (details: ResponseDetail[], filter: ResponseFilter): ResponseDetail[] =>
+  filter === "comments" ? details.filter((d) => d.comments.length > 0) : filter === "low" ? details.filter((d) => d.hasLowRating) : details;

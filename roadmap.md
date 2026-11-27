@@ -339,3 +339,6 @@
 - [x] gravacao100 ativo, restrito ao cliente indicado e produto avulso, 3 usos até 02/12/2026 22:16 (Brasília); nenhum uso consumido.
 - [x] Checkout real da conta indicada zerado sem concluir. Compra descartável concluída, confirmação e retomada nos questionários com dados básicos restaurados; apenas um registro pago, sem duplicação. Boleto e demais produtos cobertos por regressões; suporte pt/en/es atualizado.
 - [ ] Gravação completa e publicação: testes não geraram hipóteses/planos com IA nem completaram avaliações na conta indicada, para preservar a gravação. Publicação depende do Guilherme.
+
+## Pesquisa de satisfação — respostas sob demanda
+- [x] Card lista até 5 respostas em uma linha; avaliação completa abre em janela com Anterior/Próxima e lista completa com rolagem interna.

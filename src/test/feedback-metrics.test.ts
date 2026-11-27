@@ -115,3 +115,19 @@ describe("voz do paciente", () => {
     expect(d.comments).toHaveLength(0);
   });
 });
+
+describe("Respostas individuais sob demanda", () => {
+  it("filtros mantêm a ordem e separam comentários de notas baixas", async () => {
+    const { filterResponses, RESPONSE_PREVIEW } = await import("@/lib/feedbackMetrics");
+    const details = responseDetails([
+      row({ id: "a", service_answers: { recommend: "sim", quality: "excelente" } }),
+      row({ id: "b", service_answers: { recommend: "sim", quality: "ruim" } }),
+      row({ id: "c", service_answers: { recommend: "sim" }, general_observations: "Ótimo atendimento" }),
+      row({ id: "d", service_answers: { recommend: "nao" }, general_observations: "Demora" }),
+    ]);
+    expect(filterResponses(details, "all").map((d) => d.id)).toEqual(["a", "b", "c", "d"]);
+    expect(filterResponses(details, "comments").map((d) => d.id)).toEqual(["c", "d"]);
+    expect(filterResponses(details, "low").map((d) => d.id)).toEqual(["b", "d"]);
+    expect(RESPONSE_PREVIEW).toBeLessThanOrEqual(5);
+  });
+});

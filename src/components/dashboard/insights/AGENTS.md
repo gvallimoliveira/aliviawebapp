@@ -14,3 +14,4 @@
 
 - Adherence links readiness by scoped patient ID (patient:<id> without email) over a 14-day window; frequency uses elapsed month-to-date days; financial drilldowns reuse the totals' scoped appointments and price resolver.
 - Satisfaction survey results render only in the `feedback-results` registry entry (Team & Quality, next to the link generator) and stay visible to owner/admin/secretary; all numbers come from pure `feedbackMetrics.ts` (shared by card, CSV and printable report), which covers every form question, keeps comments untruncated, ignores blank answers and raises attention points only with 5+ answers, so small samples never produce alarms.
+- Insight cards stay summary-sized: record lists show at most a short preview (`RESPONSE_PREVIEW` for survey responses) and the full list/detail opens on request in a dialog with internal scroll (`FeedbackResponsesDialog`), so a card never grows with the number of records.
