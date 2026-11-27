@@ -1,5 +1,9 @@
 # Roadmap
 
+## Pesquisa de satisfação — resultados para o gestor
+- [x] Resultados movidos para Insights → Equipe & Qualidade com NPS (promotores/neutros/detratores), nota por pergunta nas três dimensões, pontos de atenção, comparação por serviço, evolução mensal e respostas individuais com comentários completos; planilha e relatório com todas as perguntas.
+- [ ] Aberto: nenhum link gerado hoje identifica o profissional avaliado, então não há comparação por profissional. Depende de decisão do Guilherme sobre incluir a escolha do profissional no gerador de link.
+
 ## Admin — ocultar profissionais da vitrine
 - [x] Marcador próprio de ocultação (não reaproveita aprovação/assinatura); busca da vitrine ignora ocultos; só admin altera, com trava contra autoedição.
 - [x] Aba Profissionais do Admin: atalho ocultar/exibir por linha, situação na vitrine e filtro com contagem.

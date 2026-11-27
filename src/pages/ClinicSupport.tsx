@@ -296,7 +296,7 @@ const categories: ToolCategory[] = [
         key: "nps_survey",
         icon: Smile,
         title: "Pesquisa de satisfação (NPS) por link",
-        desc: "Envie um link público de pesquisa de satisfação para o paciente após o atendimento. As respostas alimentam um dashboard de NPS por profissional e por serviço.",
+        desc: "Envie um link público de pesquisa de satisfação para o paciente após o atendimento. As respostas aparecem em Insights → Equipe & Qualidade: NPS, notas de cada pergunta (tratamento, profissional e clínica), pontos de atenção e os comentários completos, com filtro por período e serviço.",
       },
     ],
   },
@@ -546,7 +546,7 @@ const faqKeys = [
   },
   {
     q: "Como funciona a pesquisa de satisfação (NPS)?",
-    a: "Você gera um link público de pesquisa e envia ao paciente após o atendimento (por chat, e-mail ou WhatsApp). As respostas geram um dashboard de NPS por profissional e por tipo de serviço, ajudando você a tomar decisões sobre equipe e qualidade.",
+    a: "Você gera um link público de pesquisa e envia ao paciente após o atendimento (por chat, e-mail ou WhatsApp). A pesquisa é anônima. Em Insights → Equipe & Qualidade você vê o NPS, a nota de cada pergunta sobre tratamento, profissional e clínica, os pontos de atenção e os comentários completos de cada resposta, com filtro por período e serviço e exportação em planilha ou relatório.",
   },
   {
     q: "A IA substitui o raciocínio do fisioterapeuta?",

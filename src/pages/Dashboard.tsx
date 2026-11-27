@@ -48,8 +48,6 @@ const DailySummaryCard = lazy(() => import("@/components/dashboard/DailySummaryC
 const ClinicOwnerDashboard = lazy(() => import("@/components/dashboard/ClinicOwnerDashboard"));
 const InsightsTab = lazy(() => import("@/components/dashboard/insights/InsightsTab"));
 const ProMetricsSection = lazy(() => import("@/components/dashboard/ProMetricsSection"));
-const FeedbackSurveyCard = lazy(() => import("@/components/dashboard/FeedbackSurveyCard"));
-const FeedbackResultsCard = lazy(() => import("@/components/dashboard/FeedbackResultsCard"));
 const ExportDataCard = lazy(() => import("@/components/dashboard/ExportDataCard"));
 const ImportDataCard = lazy(() => import("@/components/dashboard/ImportDataCard"));
 const DemoUpsellBanner = lazy(() => import("@/components/demo/DemoUpsellBanner"));
@@ -1061,8 +1059,6 @@ const Dashboard = () => {
                 <ClinicTrialBanner />
                 <div className="relative space-y-6">
                   <InsightsTab clinicId={activeClinic.clinic_id} fullClinicMode canManage={isClinicOwner} />
-                  <FeedbackSurveyCard clinicId={activeClinic.clinic_id} lang={language} />
-                  <FeedbackResultsCard clinicId={activeClinic.clinic_id} lang={language} />
                   <ProMetricsSection clinicId={activeClinic.clinic_id} />
                   <ClinicTrialBlockOverlay />
                 </div>

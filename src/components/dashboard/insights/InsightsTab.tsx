@@ -22,6 +22,8 @@ import PayoutsCard from "./PayoutsCard";
 import { useManagementData, type ManagementData } from "./useManagementData";
 import { ENABLE_PERIODIZATION } from "@/lib/featureFlags";
 import ClinicOverviewMetrics from "./ClinicOverviewMetrics";
+import FeedbackQualityCard from "./FeedbackQualityCard";
+import FeedbackSurveyCard from "@/components/dashboard/FeedbackSurveyCard";
 
 interface Props {
   clinicId?: string;
@@ -35,7 +37,7 @@ type Cat = "summary" | "patients" | "routine" | "finance" | "team" | "operations
 type L = "pt" | "en" | "es";
 const tr = (l: L, pt: string, en: string, es: string) => (l === "pt" ? pt : l === "es" ? es : en);
 
-interface Ctx { clinicId?: string; professionalId?: string; scopeKey?: string; isManager: boolean; isClinic: boolean; teamDismiss: boolean; d: ManagementData }
+interface Ctx { lang: L; clinicId?: string; professionalId?: string; scopeKey?: string; isManager: boolean; isClinic: boolean; teamDismiss: boolean; d: ManagementData }
 interface Entry { id: string; cat: Cat; manager?: boolean; clinicOnly?: boolean; wide?: boolean; when?: boolean; render: (c: Ctx) => ReactNode }
 
 /**
@@ -59,6 +61,8 @@ const REGISTRY: Entry[] = [
   { id: "rev-hour", cat: "finance", manager: true, render: (c) => <RevenuePerHourCard d={c.d} showTeam={c.isClinic} /> },
   { id: "concentration", cat: "finance", manager: true, clinicOnly: true, render: (c) => <ConcentrationCard clinicId={c.clinicId!} /> },
   { id: "referral", cat: "finance", manager: true, render: (c) => <ReferralRateCard d={c.d} /> },
+  { id: "feedback-results", cat: "team", clinicOnly: true, wide: true, render: (c) => <FeedbackQualityCard key={c.clinicId} clinicId={c.clinicId!} /> },
+  { id: "feedback-link", cat: "team", clinicOnly: true, wide: true, render: (c) => <FeedbackSurveyCard clinicId={c.clinicId!} lang={c.lang} /> },
   { id: "discharge-dropout", cat: "team", manager: true, render: (c) => <DischargeVsDropoutCard d={c.d} /> },
   { id: "owner-dep", cat: "team", manager: true, clinicOnly: true, render: (c) => <OwnerDependenceCard d={c.d} /> },
   { id: "therapists", cat: "team", manager: true, clinicOnly: true, wide: true, render: (c) => <TherapistStatsCard clinicId={c.clinicId!} /> },
@@ -94,7 +98,7 @@ const InsightsTab = ({ clinicId, professionalId, fullClinicMode = false, canMana
     }
   }, [firstStepsTarget, isManager, storeKey]);
 
-  const ctx: Ctx = { clinicId, professionalId, scopeKey, isManager, isClinic, teamDismiss: canManage && isClinic, d };
+  const ctx: Ctx = { lang: l, clinicId, professionalId, scopeKey, isManager, isClinic, teamDismiss: canManage && isClinic, d };
   const entries = REGISTRY.filter((e) => e.when !== false && (!e.manager || isManager) && (!e.clinicOnly || (isClinic && fullClinicMode)));
 
   const CATS: { id: Cat; label: string; icon: ReactNode }[] = [
