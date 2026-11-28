@@ -30,6 +30,7 @@ import { AI_CREDIT_BLOCKED, AI_CREDIT_REFRESH } from "@/lib/aiCreditPolicy";
 import { supabase } from "@/integrations/supabase/client";
 
 const Gateway = lazy(() => import("./pages/Gateway"));
+const LinksBio = lazy(() => import("./pages/links/LinksBio"));
 const Auth = lazy(() => import("./pages/Auth"));
 const CardioTestSheet = lazy(() => import("./pages/CardioTestSheet"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -148,6 +149,7 @@ const App = () => {
               <Suspense fallback={<RouteFallback />}>
                 <Routes>
                   <Route path="/" element={<Gateway />} />
+                  <Route path="/links" element={<LinksBio />} />
                   <Route path="/para-pacientes" element={<PatientLanding />} />
                   <Route path="/para-pacientes/demo" element={<PatientDemo />} />
                   <Route path="/landing-legacy" element={<LandingLegacy />} />

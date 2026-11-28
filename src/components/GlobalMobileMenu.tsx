@@ -29,6 +29,7 @@ import LanguageSelector from "@/components/LanguageSelector";
 import ClinicContextSelector from "@/components/dashboard/ClinicContextSelector";
 
 const HIDDEN_PATH_PREFIXES = [
+  "/links",
   "/assessment",
   "/payment-success",
   "/aceitar-convite",

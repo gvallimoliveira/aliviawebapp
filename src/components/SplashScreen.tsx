@@ -21,7 +21,7 @@ const SplashScreen = () => {
   const storageKey = studio ? STUDIO_STORAGE_KEY : STORAGE_KEY;
   const [visible, setVisible] = useState(() => {
     if (typeof window === "undefined") return false;
-    if (window.location.pathname === "/profissionais") return false;
+    if (["/profissionais", "/links", "/links/"].includes(window.location.pathname)) return false;
     try {
       const last = Number(localStorage.getItem(storageKey) || "0");
       return !last || Date.now() - last > TTL_MS;

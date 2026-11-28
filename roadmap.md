@@ -1,5 +1,8 @@
 # Roadmap
 
+## Página compacta para a bio do Instagram
+- [x] Página pública /links, sem menu/rodapé, com PRO e Clínica em destaque, Acadêmico e Paciente secundários, contatos oficiais e mensagem predefinida; links com UTMs e textos pt/en/es, preservando as landings atuais.
+
 ## Acesso à agenda por integrante da clínica
 - [x] Dono/admin define em Clínica → Equipe o alcance de cada integrante clínico: só a própria, serviços que opera (múltiplos) ou clínica toda; regra aplicada no servidor, aviso na Agenda do integrante, ajuda da clínica atualizada.
 - [ ] Pendente de decisão: o mesmo recorte para prontuários/lista de pacientes e para evoluções (hoje a equipe clínica lê as da clínica toda).

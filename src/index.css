@@ -164,6 +164,34 @@ All colors MUST be HSL.
 }
 
 /* CSS-based float animation — cheaper than JS-driven framer-motion */
+.links-bio {
+  --background: 30 57.14% 97.25%;
+  --foreground: 164 35% 12%;
+  --primary: 168.22 55.44% 37.84%;
+  --primary-foreground: 164 55% 8%;
+  --muted-foreground: 164 12% 32%;
+  --border: 164 20% 79%;
+  --input: 164 20% 79%;
+  --ring: 168.22 55.44% 37.84%;
+  --accent: 164 22% 92%;
+  --accent-foreground: 164 35% 12%;
+}
+
+.dark .links-bio {
+  --background: 168 24% 6%;
+  --foreground: 160 10% 96%;
+  --muted-foreground: 165 8% 75%;
+  --border: 168 16% 30%;
+  --input: 168 16% 30%;
+  --accent: 168 22% 18%;
+  --accent-foreground: 160 10% 96%;
+}
+
+.links-bio {
+  padding-top: max(1.5rem, env(safe-area-inset-top));
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+}
+
 @keyframes float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-8px); }
